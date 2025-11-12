@@ -1,23 +1,58 @@
 /**
  * Main App Component
  */
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
-
-// Import pages (to be created)
-// import Dashboard from './pages/Dashboard';
-// import TaskManagement from './pages/TaskManagement';
-// import TeamView from './pages/TeamView';
-// import Analytics from './pages/Analytics';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
+import TaskManagement from './pages/TaskManagement';
+import TeamView from './pages/TeamView';
+import Analytics from './pages/Analytics';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#667eea',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#764ba2',
+    },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h4: {
+      fontWeight: 700,
+    },
+    h6: {
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 12,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 600,
+          borderRadius: 8,
+        },
+        contained: {
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          },
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          borderRadius: 12,
+        },
+      },
     },
   },
 });
@@ -27,15 +62,14 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <div className="App">
+        <Layout>
           <Routes>
-            <Route path="/" element={<h1>B2P.AI - Dashboard</h1>} />
-            <Route path="/tasks" element={<h1>Task Management</h1>} />
-            <Route path="/team" element={<h1>Team View</h1>} />
-            <Route path="/analytics" element={<h1>Analytics</h1>} />
-            {/* Add more routes as pages are created */}
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/tasks" element={<TaskManagement />} />
+            <Route path="/team" element={<TeamView />} />
+            <Route path="/analytics" element={<Analytics />} />
           </Routes>
-        </div>
+        </Layout>
       </Router>
     </ThemeProvider>
   );
