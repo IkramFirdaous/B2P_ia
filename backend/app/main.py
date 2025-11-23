@@ -63,11 +63,12 @@ async def health_check():
 
 
 # Import and include API routers
-from app.api.v1 import tasks, employees, analytics
+from app.api.v1 import tasks, employees, analytics, agent
 
 app.include_router(tasks.router, prefix=settings.API_V1_PREFIX, tags=["tasks"])
 app.include_router(employees.router, prefix=settings.API_V1_PREFIX, tags=["employees"])
 app.include_router(analytics.router, prefix=settings.API_V1_PREFIX, tags=["analytics"])
+app.include_router(agent.router, prefix=settings.API_V1_PREFIX, tags=["multi-agent"])
 
 if __name__ == "__main__":
     import uvicorn

@@ -26,6 +26,7 @@ import {
   People as PeopleIcon,
   Analytics as AnalyticsIcon,
   Psychology as AIIcon,
+  AutoAwesome as AIAssistantIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -37,6 +38,7 @@ interface LayoutProps {
 
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+  { text: 'AI Assistant', icon: <AIAssistantIcon />, path: '/ai-assistant' },
   { text: 'Tasks', icon: <TaskIcon />, path: '/tasks' },
   { text: 'Team', icon: <PeopleIcon />, path: '/team' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
