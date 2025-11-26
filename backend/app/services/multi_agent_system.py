@@ -68,7 +68,7 @@ class TaskPrioritizationAgent(Agent):
             name="Task Prioritization Agent",
             description="Prioritizes tasks based on urgency, deadlines, effort, and productivity patterns"
         )
-        self.service = TaskPrioritizationService()
+        self.service = None
 
     async def can_handle(self, task: str, context: Dict[str, Any]) -> float:
         keywords = ["prioritize", "priority", "urgent", "important", "order", "rank", "sort tasks"]
@@ -78,6 +78,8 @@ class TaskPrioritizationAgent(Agent):
     async def execute(self, task: str, context: Dict[str, Any]) -> AgentResponse:
         try:
             employee_id = context.get("employee_id")
+            db = context.get("db")
+            
             if not employee_id:
                 return AgentResponse(
                     success=False,
@@ -86,9 +88,21 @@ class TaskPrioritizationAgent(Agent):
                     message="employee_id is required for task prioritization",
                     suggestions=["Provide employee_id in context"]
                 )
+            
+            if not db:
+                return AgentResponse(
+                    success=False,
+                    agent_used=self.name,
+                    result=None,
+                    message="Database session is required",
+                    suggestions=["Provide db in context"]
+                )
 
+            # Create service with db session
+            service = TaskPrioritizationService(db)
+            
             # Get prioritized tasks
-            prioritized_tasks = self.service.prioritize_employee_tasks(employee_id)
+            prioritized_tasks = service.prioritize_employee_tasks(employee_id)
 
             return AgentResponse(
                 success=True,
@@ -117,7 +131,7 @@ class BurnoutDetectionAgent(Agent):
             name="Burnout Detection Agent",
             description="Monitors and predicts employee burnout risk"
         )
-        self.service = BurnoutDetectionService()
+        self.service = None
 
     async def can_handle(self, task: str, context: Dict[str, Any]) -> float:
         keywords = ["burnout", "stress", "wellbeing", "health", "tired", "exhausted", "overwork"]
@@ -127,6 +141,8 @@ class BurnoutDetectionAgent(Agent):
     async def execute(self, task: str, context: Dict[str, Any]) -> AgentResponse:
         try:
             employee_id = context.get("employee_id")
+            db = context.get("db")
+            
             if not employee_id:
                 return AgentResponse(
                     success=False,
@@ -134,12 +150,23 @@ class BurnoutDetectionAgent(Agent):
                     result=None,
                     message="employee_id is required for burnout detection"
                 )
+            
+            if not db:
+                return AgentResponse(
+                    success=False,
+                    agent_used=self.name,
+                    result=None,
+                    message="Database session is required"
+                )
 
+            # Create service with db session
+            service = BurnoutDetectionService(db)
+            
             # Calculate burnout risk
-            burnout_data = self.service.calculate_burnout_risk(employee_id)
+            burnout_data = service.calculate_burnout_risk(employee_id)
 
             # Generate recommendations
-            recommendations = self.service.generate_recommendations(burnout_data)
+            recommendations = service.generate_recommendations(burnout_data)
 
             return AgentResponse(
                 success=True,
@@ -168,7 +195,7 @@ class WorkloadBalancingAgent(Agent):
             name="Workload Balancing Agent",
             description="Balances workload across team members equitably"
         )
-        self.service = WorkloadBalancingService()
+        self.service = None
 
     async def can_handle(self, task: str, context: Dict[str, Any]) -> float:
         keywords = ["balance", "distribute", "workload", "equitable", "fair", "share", "team load"]
@@ -178,6 +205,8 @@ class WorkloadBalancingAgent(Agent):
     async def execute(self, task: str, context: Dict[str, Any]) -> AgentResponse:
         try:
             team_id = context.get("team_id")
+            db = context.get("db")
+            
             if not team_id:
                 return AgentResponse(
                     success=False,
@@ -185,12 +214,23 @@ class WorkloadBalancingAgent(Agent):
                     result=None,
                     message="team_id is required for workload balancing"
                 )
+            
+            if not db:
+                return AgentResponse(
+                    success=False,
+                    agent_used=self.name,
+                    result=None,
+                    message="Database session is required"
+                )
 
+            # Create service with db session
+            service = WorkloadBalancingService(db)
+            
             # Calculate workload equity
-            equity_report = self.service.calculate_team_equity(team_id)
+            equity_report = service.calculate_team_equity(team_id)
 
             # Get recommendations
-            recommendations = self.service.suggest_rebalancing(team_id)
+            recommendations = service.suggest_rebalancing(team_id)
 
             return AgentResponse(
                 success=True,
@@ -219,7 +259,7 @@ class TaskExtractionAgent(Agent):
             name="Task Extraction Agent",
             description="Extracts tasks from emails, meeting notes, and documents using NLP"
         )
-        self.service = TaskExtractionService()
+        self.service = None
 
     async def can_handle(self, task: str, context: Dict[str, Any]) -> float:
         keywords = ["extract", "parse", "analyze text", "find tasks", "meeting notes", "email"]
@@ -231,6 +271,8 @@ class TaskExtractionAgent(Agent):
     async def execute(self, task: str, context: Dict[str, Any]) -> AgentResponse:
         try:
             text = context.get("text")
+            db = context.get("db")
+            
             if not text:
                 return AgentResponse(
                     success=False,
@@ -238,9 +280,20 @@ class TaskExtractionAgent(Agent):
                     result=None,
                     message="text is required for task extraction"
                 )
+            
+            if not db:
+                return AgentResponse(
+                    success=False,
+                    agent_used=self.name,
+                    result=None,
+                    message="Database session is required"
+                )
 
+            # Create service with db session
+            service = TaskExtractionService(db)
+            
             # Extract tasks
-            extracted_tasks = self.service.extract_tasks_from_text(text)
+            extracted_tasks = service.extract_tasks_from_text(text)
 
             return AgentResponse(
                 success=True,
@@ -269,7 +322,7 @@ class RecognitionAgent(Agent):
             name="Recognition Agent",
             description="Tracks and recognizes employee achievements automatically"
         )
-        self.service = RecognitionService()
+        self.service = None
 
     async def can_handle(self, task: str, context: Dict[str, Any]) -> float:
         keywords = ["recognition", "achievement", "accomplishment", "reward", "celebrate", "milestone"]
@@ -279,6 +332,8 @@ class RecognitionAgent(Agent):
     async def execute(self, task: str, context: Dict[str, Any]) -> AgentResponse:
         try:
             employee_id = context.get("employee_id")
+            db = context.get("db")
+            
             if not employee_id:
                 return AgentResponse(
                     success=False,
@@ -286,9 +341,20 @@ class RecognitionAgent(Agent):
                     result=None,
                     message="employee_id is required for recognition"
                 )
+            
+            if not db:
+                return AgentResponse(
+                    success=False,
+                    agent_used=self.name,
+                    result=None,
+                    message="Database session is required"
+                )
 
+            # Create service with db session
+            service = RecognitionService(db)
+            
             # Detect achievements
-            achievements = self.service.detect_achievements(employee_id)
+            achievements = service.detect_achievements(employee_id)
 
             return AgentResponse(
                 success=True,

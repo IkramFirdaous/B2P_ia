@@ -4,7 +4,9 @@ Unified API for all AI features through intelligent agent routing
 """
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, List
+from sqlalchemy.orm import Session
 
+from app.core.database import get_db
 from app.services.multi_agent_system import (
     orchestrator,
     AgentRequest,
@@ -16,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/agent/execute", response_model=AgentResponse)
-async def execute_agent_task(request: AgentRequest):
+async def execute_agent_task(request: AgentRequest, db: Session = Depends(get_db)):
     """
     Execute a task using the multi-agent system
 
@@ -40,6 +42,11 @@ async def execute_agent_task(request: AgentRequest):
         AgentResponse with results and suggestions
     """
     try:
+        # Add db to context
+        if request.context is None:
+            request.context = {}
+        request.context["db"] = db
+        
         response = await orchestrator.execute(request)
         return response
     except Exception as e:

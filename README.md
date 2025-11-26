@@ -21,11 +21,13 @@ B2P.AI is an intelligent workplace management system that combines AI-powered ta
 ### Key Features
 
 - 🤖 **AI Task Prioritization**: Automatic task scoring based on urgency, deadlines, effort, and employee productivity patterns
+- 📧 **Email Extraction**: Gmail integration with Gemini AI to automatically extract tasks, deadlines, and sentiment from emails
 - 🧠 **NLP Task Extraction**: Extract tasks from emails and meeting notes using Natural Language Processing
 - 📊 **Burnout Detection**: Real-time monitoring of employee wellbeing indicators with predictive analytics
 - ⚖️ **Workload Balancing**: Equitable task distribution across teams with automated recommendations
 - 🏆 **Achievement Tracking**: Automatic recognition of employee accomplishments
 - 📈 **Advanced Analytics**: Comprehensive dashboards for managers and individuals
+- 📁 **Dataset Export**: Export extracted email data as CSV for analysis
 
 ---
 
@@ -39,6 +41,8 @@ B2P.AI is an intelligent workplace management system that combines AI-powered ta
 - Redis (Cache & Task Queue)
 - SQLAlchemy (ORM)
 - spaCy & Transformers (NLP/ML)
+- Google Gemini AI (Email extraction)
+- Gmail API (Email integration)
 - Celery (Background Tasks)
 
 **Frontend:**
@@ -158,6 +162,7 @@ npm start
 
 ---
 
+
 ## 🔧 Configuration
 
 ### Backend Configuration (`.env`)
@@ -201,6 +206,13 @@ Once the backend is running, visit:
 - `GET /api/v1/tasks` - List tasks
 - `GET /api/v1/tasks/employee/{id}/prioritized` - Get prioritized tasks
 - `POST /api/v1/tasks/extract` - Extract tasks from text (NLP)
+
+#### Email Extraction
+- `POST /api/v1/email-extraction/connect` - Connect Gmail account (OAuth)
+- `POST /api/v1/email-extraction/fetch` - Fetch and extract from emails
+- `GET /api/v1/email-extraction/tasks` - Get extracted tasks dataset
+- `POST /api/v1/email-extraction/approve/{id}` - Approve extracted task
+- `GET /api/v1/email-extraction/dataset/export` - Export dataset as CSV/JSON
 
 #### Analytics
 - `GET /api/v1/analytics/burnout/{employee_id}` - Get burnout risk
@@ -260,15 +272,16 @@ Global Score = 0.6 × Cumulative_Load + 0.4 × Critical_Score
 - [x] Basic frontend structure
 
 ### Phase 2: AI Features 🚧
-- [ ] NLP task extraction (spaCy integration)
-- [ ] Sentiment analysis
+- [x] NLP task extraction (spaCy integration)
+- [x] Sentiment analysis
+- [x] Email integration with Gmail & Gemini AI
 - [ ] ML burnout prediction model
 - [ ] Skill gap analysis
 
 ### Phase 3: Advanced Features 🔜
 - [ ] Real-time notifications
 - [ ] Calendar integration
-- [ ] Email integration
+- [ ] Microsoft Outlook integration
 - [ ] Mobile app
 - [ ] Advanced visualizations
 
@@ -298,11 +311,21 @@ This project is licensed under the MIT License.
 
 ---
 
+## 📚 Additional Documentation
+
+- [Email Extraction Setup Guide](./EMAIL_EXTRACTION.md) - Complete guide for Gmail integration and Gemini AI setup
+- [Multi-Agent System](./MULTI_AGENT_SYSTEM.md) - Documentation for the AI agent architecture
+- [Quick Start Guide](./QUICKSTART.md) - Get up and running in minutes
+
+---
+
 ## 🙏 Acknowledgments
 
 - FastAPI for the amazing web framework
 - Material-UI for the beautiful React components
 - spaCy for NLP capabilities
+- Google Gemini AI for intelligent extraction
+- Gmail API for email integration
 - The open-source community
 
 ---

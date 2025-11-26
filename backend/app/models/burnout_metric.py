@@ -1,6 +1,5 @@
 """BurnoutMetric database model"""
-from sqlalchemy import Column, Date, Float, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Date, Float, Integer, ForeignKey, String
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 
@@ -9,7 +8,7 @@ class BurnoutMetric(BaseModel):
     """Daily burnout indicators for employees"""
     __tablename__ = "burnout_metrics"
 
-    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
+    employee_id = Column(String(36), ForeignKey("employees.id"), nullable=False)
     date = Column(Date, nullable=False, index=True)
 
     # Activity metrics

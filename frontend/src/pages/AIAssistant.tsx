@@ -55,7 +55,6 @@ const AIAssistant: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [employeeId, setEmployeeId] = useState<number>(1); // Demo default
   const [teamId, setTeamId] = useState<number>(1); // Demo default
-  const [examples, setExamples] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const quickActions: QuickAction[] = [
@@ -108,8 +107,8 @@ const AIAssistant: React.FC = () => {
 
   const loadExamples = async () => {
     try {
-      const data = await multiAgentService.getExamples();
-      setExamples(data);
+      await multiAgentService.getExamples();
+      // Examples loaded successfully
     } catch (error) {
       console.error('Failed to load examples:', error);
     }

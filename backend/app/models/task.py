@@ -1,6 +1,5 @@
 """Task database model"""
 from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey, Enum, JSON, ARRAY
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
 from .base import BaseModel
@@ -31,8 +30,8 @@ class Task(BaseModel):
     description = Column(Text, nullable=True)
 
     # Assignment
-    assigned_to = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
+    assigned_to = Column(String(36), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(String(36), ForeignKey("employees.id"), nullable=False)
 
     # Priority and urgency
     urgency = Column(Integer, nullable=False, default=3)  # 1-5 scale (manager input)

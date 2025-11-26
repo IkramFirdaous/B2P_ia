@@ -1,6 +1,5 @@
 """Employee database model"""
 from sqlalchemy import Column, String, ForeignKey, JSON
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 
@@ -11,7 +10,7 @@ class Employee(BaseModel):
 
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id"), nullable=True)
+    team_id = Column(String(36), ForeignKey("teams.id"), nullable=True)
     role = Column(String(100), nullable=False)
 
     # JSON format: {"morning": 0.8, "afternoon": 0.6, "evening": 0.4}
