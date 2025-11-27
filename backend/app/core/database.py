@@ -6,8 +6,14 @@ from app.core.config import settings
 
 
 # Create database engine
+# For SQLite, we need to disable same-thread check for async operations
+connect_args = {}
+if settings.DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
 engine = create_engine(
     settings.DATABASE_URL,
+    connect_args=connect_args,
     pool_pre_ping=True,  # Verify connections before using
     echo=settings.ENVIRONMENT == "development"  # Log SQL in dev mode
 )

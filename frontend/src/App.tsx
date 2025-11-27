@@ -14,6 +14,7 @@ import AIAssistant from './pages/AIAssistant';
 import Employees from './pages/Employees';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AuthCallback from './pages/AuthCallback';
 
 const theme = createTheme({
   palette: {
@@ -186,6 +187,7 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
 
             {/* Protected routes */}
             <Route

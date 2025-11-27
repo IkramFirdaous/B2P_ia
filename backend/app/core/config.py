@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # Google OAuth (for Gmail Sign-In)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GMAIL_CLIENT_ID: str = ""
+    GMAIL_CLIENT_SECRET: str = ""
+
     @property
     def BACKEND_CORS_ORIGINS(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

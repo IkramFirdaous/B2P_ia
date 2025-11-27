@@ -7,6 +7,8 @@ from .skill import Skill, EmployeeSkill, SkillCategory, SkillLevel
 from .task import Task, TaskStatus, TaskSource
 from .burnout_metric import BurnoutMetric
 from .achievement import Achievement, AchievementType
+from .user_session import UserSession
+from .email_credential import EmailCredential
 
 __all__ = [
     "Base",
@@ -24,4 +26,6 @@ __all__ = [
     "BurnoutMetric",
     "Achievement",
     "AchievementType",
+    "UserSession",
+    "EmailCredential",
 ]

@@ -143,7 +143,7 @@ export default function Dashboard() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={700} gutterBottom>
-            Welcome back, John! 👋
+            Welcome back ! 👋
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Here's your performance overview

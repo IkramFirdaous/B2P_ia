@@ -10,7 +10,7 @@ class Employee(BaseModel):
 
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)  # Hashed password
+    password_hash = Column(String(255), nullable=True)  # Hashed password (nullable for OAuth users)
     role = Column(String(100), nullable=False)
     team_id = Column(
         UUID(),
@@ -37,6 +37,10 @@ class Employee(BaseModel):
     burnout_metrics = relationship("BurnoutMetric", back_populates="employee", cascade="all, delete-orphan")
     achievements = relationship("Achievement", back_populates="employee", cascade="all, delete-orphan")
     skills = relationship("EmployeeSkill", back_populates="employee", cascade="all, delete-orphan")
+
+    # OAuth relationships
+    sessions = relationship("UserSession", back_populates="employee", cascade="all, delete-orphan")
+    email_credential = relationship("EmailCredential", back_populates="employee", uselist=False, cascade="all, delete-orphan")
 
     def __repr__(self):
         return (
