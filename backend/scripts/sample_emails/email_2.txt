@@ -1,0 +1,18 @@
+Subject: Réunion client - Nouveau projet
+Urgency: 3/5
+Source: email
+
+==================================================
+
+Bonjour l'équipe,
+
+Suite à la réunion client de ce matin, voici les actions à entreprendre:
+
+1. Préparer une proposition technique pour le nouveau module CRM
+2. Estimer le temps de développement et les ressources nécessaires
+3. Organiser une réunion de kick-off avec l'équipe technique la semaine prochaine
+
+Deadline pour la proposition: vendredi prochain.
+
+Merci,
+Chef de projet

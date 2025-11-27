@@ -20,6 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.claude/
 
 # Virtual Environment
 venv/
@@ -74,6 +75,9 @@ frontend/out/
 # OS
 Thumbs.db
 .DS_Store
+
+# Windows reserved names
+nul
 
 # Temporary files
 *.tmp
