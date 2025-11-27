@@ -3,7 +3,11 @@
  */
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import Login from './pages/Login';
+import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import TaskManagement from './pages/TaskManagement';
 import TeamView from './pages/TeamView';
@@ -177,16 +181,32 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <Layout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/ai-assistant" element={<AIAssistant />} />
-            <Route path="/email-extraction" element={<EmailExtraction />} />
-            <Route path="/tasks" element={<TaskManagement />} />
-            <Route path="/team" element={<TeamView />} />
-            <Route path="/analytics" element={<Analytics />} />
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+
+            {/* Protected routes */}
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/ai-assistant" element={<AIAssistant />} />
+                      <Route path="/email-extraction" element={<EmailExtraction />} />
+                      <Route path="/tasks" element={<TaskManagement />} />
+                      <Route path="/team" element={<TeamView />} />
+                      <Route path="/analytics" element={<Analytics />} />
+                    </Routes>
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
           </Routes>
-        </Layout>
+        </AuthProvider>
       </Router>
     </ThemeProvider>
   );

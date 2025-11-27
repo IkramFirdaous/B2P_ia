@@ -94,6 +94,8 @@ Date: {date}
     def _build_optimized_prompt(self, email_content: str) -> str:
         """Build an optimized, concise prompt for Gemini API"""
         today = datetime.now().strftime("%Y-%m-%d")
+        next_monday = (datetime.now() + timedelta(days=(7 - datetime.now().weekday()))).strftime("%Y-%m-%d")
+        tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         
         return f"""Tu es un assistant d'extraction de tâches. Analyse cet email et extrais les informations au format JSON stricte.
 
@@ -119,13 +121,13 @@ RÈGLES D'EXTRACTION:
      * 3 = "cette semaine", deadline 3-7 jours
      * 2 = "quand tu peux", deadline >7 jours
      * 1 = Pas de deadline, informatif
-   - deadline: Format ISO "YYYY-MM-DDTHH:MM:SS" (null si non mentionné)
-   - confidence: 0.0-1.0
-
-3. SENTIMENT:
-   - score: -1.0 (très négatif) à 1.0 (très positif)
-   - label: "positive", "neutral", ou "negative"
-   - reasoning: Explication brève
+   - deadline: Extrais la deadline EXACTEMENT comme mentionnée dans l'email
+     * Si l'email dit "demain" → mets "{tomorrow}T17:00:00"
+     * Si l'email dit "lundi" → mets "{next_monday}T17:00:00"
+     * Si l'email dit "aujourd'hui" → mets "{today}T17:00:00"
+     * Si l'email donne une date précise (ex: "le 5 décembre") → mets "2024-12-05T17:00:00"
+     * Si AUCUNE deadline n'est mentionnée → mets null
+   - confidence: 0.0-1.0 (confiance dans l'extraction)
 
 RETOURNE UNIQUEMENT UN OBJET JSON VALIDE (pas de markdown, pas de texte avant/après):
 {{
@@ -137,12 +139,7 @@ RETOURNE UNIQUEMENT UN OBJET JSON VALIDE (pas de markdown, pas de texte avant/ap
       "deadline": "2024-12-01T17:00:00",
       "confidence": 0.9
     }}
-  ],
-  "sentiment": {{
-    "score": 0.0,
-    "label": "neutral",
-    "reasoning": "Explication"
-  }}
+  ]
 }}
 
 IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
@@ -189,8 +186,10 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
         """Validate and clean extracted data with improved urgency detection"""
         
         tasks = extracted_data.get('tasks', [])
-        sentiment = extracted_data.get('sentiment', {})
         email_text = self._prepare_email_text(email_data).lower()
+        
+        # Try to extract a global deadline from the email if Gemini missed it
+        global_deadline = self._extract_deadline_from_text(email_text)
         
         cleaned_tasks = []
         for task in tasks:
@@ -202,8 +201,10 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
             # Clean polite phrases
             title = self._clean_task_title(title)
             
-            # Parse deadline
+            # Parse deadline - if Gemini didn't provide one, use the global deadline
             deadline = self._parse_deadline(task.get('deadline'))
+            if not deadline and global_deadline:
+                deadline = global_deadline
             
             # IMPROVED: Calculate urgency with override logic
             urgency = self._calculate_urgency(
@@ -222,12 +223,8 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
             }
             cleaned_tasks.append(cleaned_task)
         
-        # Validate sentiment
-        sentiment_data = self._validate_sentiment(sentiment)
-        
         return {
-            'tasks': cleaned_tasks,
-            'sentiment': sentiment_data
+            'tasks': cleaned_tasks
         }
     
     def _clean_task_title(self, title: str) -> str:
@@ -276,25 +273,56 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
         return title
     
     def _parse_deadline(self, deadline_str: Optional[str]) -> Optional[datetime]:
-        """Parse deadline string to datetime"""
+        """Parse deadline string to datetime with improved relative date handling"""
         if not deadline_str:
             return None
         
+        deadline_str = str(deadline_str).strip()
+        
+        # Try ISO format first
         try:
-            # Try ISO format first
             return datetime.fromisoformat(deadline_str.replace('Z', '+00:00'))
         except (ValueError, AttributeError):
             pass
         
-        try:
-            # Try common formats
-            for fmt in ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y']:
-                try:
-                    return datetime.strptime(deadline_str, fmt)
-                except ValueError:
-                    continue
-        except:
-            pass
+        # Try common date formats
+        date_formats = [
+            '%Y-%m-%d',
+            '%Y-%m-%dT%H:%M:%S',
+            '%Y-%m-%d %H:%M:%S',
+            '%d/%m/%Y',
+            '%m/%d/%Y',
+            '%d-%m-%Y',
+            '%Y/%m/%d'
+        ]
+        
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(deadline_str, fmt)
+            except ValueError:
+                continue
+        
+        # Handle relative dates (fallback)
+        deadline_lower = deadline_str.lower()
+        now = datetime.now()
+        
+        # Today/tomorrow
+        if 'today' in deadline_lower or "aujourd'hui" in deadline_lower:
+            return now.replace(hour=17, minute=0, second=0, microsecond=0)
+        if 'tomorrow' in deadline_lower or 'demain' in deadline_lower:
+            return (now + timedelta(days=1)).replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        # Days of week
+        weekdays_en = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        weekdays_fr = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
+        
+        for i, (en, fr) in enumerate(zip(weekdays_en, weekdays_fr)):
+            if en in deadline_lower or fr in deadline_lower:
+                days_ahead = (i - now.weekday()) % 7
+                if days_ahead == 0:
+                    days_ahead = 7  # Next week
+                target_date = now + timedelta(days=days_ahead)
+                return target_date.replace(hour=17, minute=0, second=0, microsecond=0)
         
         return None
     
@@ -350,39 +378,13 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
         
         return 1  # Default: very low
     
-    def _validate_sentiment(self, sentiment: Dict) -> Dict:
-        """Validate and normalize sentiment data"""
-        score = sentiment.get('score', 0.0)
-        score = max(-1.0, min(1.0, float(score)))
-        
-        label = sentiment.get('label', 'neutral').lower()
-        if label not in ['positive', 'neutral', 'negative']:
-            # Infer label from score
-            if score > 0.3:
-                label = 'positive'
-            elif score < -0.3:
-                label = 'negative'
-            else:
-                label = 'neutral'
-        
-        return {
-            'score': score,
-            'label': label,
-            'reasoning': sentiment.get('reasoning', 'No reasoning provided')[:500]
-        }
-    
     def _extract_with_fallback(self, email_content: str, email_data: Dict) -> Dict:
         """Fallback extraction using rule-based approach (multilingual)"""
         
         # First, detect promotional/marketing emails
         if self._is_promotional_email(email_content):
             return {
-                'tasks': [],
-                'sentiment': {
-                    'score': 0.0,
-                    'label': 'neutral',
-                    'reasoning': 'Promotional/marketing email detected'
-                }
+                'tasks': []
             }
         
         tasks = []
@@ -410,13 +412,86 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
                         'confidence': 0.5
                     })
         
-        # Sentiment analysis
-        sentiment = self._analyze_sentiment_fallback(email_content)
-        
         return {
-            'tasks': tasks[:5],  # Limit to 5 tasks
-            'sentiment': sentiment
+            'tasks': tasks[:5]  # Limit to 5 tasks
         }
+    
+    def _extract_deadline_from_text(self, text: str) -> Optional[datetime]:
+        """
+        Extract deadline from email text using pattern matching
+        This is a fallback when Gemini doesn't detect the deadline
+        """
+        text_lower = text.lower()
+        now = datetime.now()
+        
+        # Pattern 1: "today" / "aujourd'hui"
+        if re.search(r'\b(today|aujourd\'?hui)\b', text_lower):
+            return now.replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        # Pattern 2: "tomorrow" / "demain"
+        if re.search(r'\b(tomorrow|demain)\b', text_lower):
+            return (now + timedelta(days=1)).replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        # Pattern 3: Days of the week (next occurrence)
+        weekdays = {
+            'monday': 0, 'lundi': 0,
+            'tuesday': 1, 'mardi': 1,
+            'wednesday': 2, 'mercredi': 2,
+            'thursday': 3, 'jeudi': 3,
+            'friday': 4, 'vendredi': 4,
+            'saturday': 5, 'samedi': 5,
+            'sunday': 6, 'dimanche': 6
+        }
+        
+        for day_name, day_num in weekdays.items():
+            pattern = rf'\b(by|before|for|pour|avant|d\'?ici)\s+{day_name}\b'
+            if re.search(pattern, text_lower):
+                days_ahead = (day_num - now.weekday()) % 7
+                if days_ahead == 0:
+                    days_ahead = 7  # Next week
+                target_date = now + timedelta(days=days_ahead)
+                return target_date.replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        # Pattern 4: Explicit dates (DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD)
+        date_patterns = [
+            r'(\d{1,2})[/-](\d{1,2})[/-](\d{4})',  # DD/MM/YYYY or DD-MM-YYYY
+            r'(\d{4})[/-](\d{1,2})[/-](\d{1,2})',  # YYYY-MM-DD
+        ]
+        
+        for pattern in date_patterns:
+            match = re.search(pattern, text)
+            if match:
+                try:
+                    if len(match.group(1)) == 4:  # YYYY-MM-DD
+                        year, month, day = int(match.group(1)), int(match.group(2)), int(match.group(3))
+                    else:  # DD/MM/YYYY
+                        day, month, year = int(match.group(1)), int(match.group(2)), int(match.group(3))
+                    
+                    return datetime(year, month, day, 17, 0, 0)
+                except ValueError:
+                    continue
+        
+        # Pattern 5: Relative time ("in 2 days", "dans 3 jours")
+        relative_match = re.search(r'(in|dans)\s+(\d+)\s+(day|days|jour|jours)', text_lower)
+        if relative_match:
+            days = int(relative_match.group(2))
+            return (now + timedelta(days=days)).replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        # Pattern 6: "this week" / "cette semaine"
+        if re.search(r'\b(this week|cette semaine)\b', text_lower):
+            days_until_friday = (4 - now.weekday()) % 7
+            if days_until_friday == 0:
+                days_until_friday = 7
+            return (now + timedelta(days=days_until_friday)).replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        # Pattern 7: "end of week" / "fin de semaine"
+        if re.search(r'\b(end of (the )?week|fin de (la )?semaine)\b', text_lower):
+            days_until_friday = (4 - now.weekday()) % 7
+            if days_until_friday == 0:
+                days_until_friday = 7
+            return (now + timedelta(days=days_until_friday)).replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        return None
     
     def _is_promotional_email(self, email_content: str) -> bool:
         """Detect if email is promotional/marketing"""
@@ -432,20 +507,3 @@ IMPORTANT: Réponds UNIQUEMENT avec le JSON, rien d'autre."""
         
         promo_count = sum(1 for keyword in promotional_keywords if keyword in content_lower)
         return promo_count >= 2
-    
-    def _analyze_sentiment_fallback(self, email_content: str) -> Dict:
-        """Simple rule-based sentiment analysis"""
-        content_lower = email_content.lower()
-        
-        positive_words = ['thank', 'great', 'excellent', 'good', 'merci', 'génial', 'super']
-        negative_words = ['urgent', 'problem', 'issue', 'asap', 'problème', 'souci']
-        
-        positive_count = sum(1 for word in positive_words if word in content_lower)
-        negative_count = sum(1 for word in negative_words if content_lower)
-        
-        if negative_count > positive_count:
-            return {'score': -0.3, 'label': 'negative', 'reasoning': 'Negative indicators detected'}
-        elif positive_count > negative_count:
-            return {'score': 0.3, 'label': 'positive', 'reasoning': 'Positive indicators detected'}
-        else:
-            return {'score': 0.0, 'label': 'neutral', 'reasoning': 'Neutral tone'}

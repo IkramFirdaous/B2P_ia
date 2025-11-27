@@ -16,6 +16,8 @@ import {
   Toolbar,
   Typography,
   Avatar,
+  Menu,
+  MenuItem,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -27,8 +29,11 @@ import {
   Analytics as AnalyticsIcon,
   Psychology as AIIcon,
   AutoAwesome as AIAssistantIcon,
+  Logout as LogoutIcon,
+  AccountCircle as AccountIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const drawerWidth = 240;
 
@@ -47,13 +52,28 @@ const menuItems = [
 
 export default function Layout({ children }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user, logout } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleMenuClose();
+    logout();
   };
 
   const drawer = (
@@ -140,16 +160,43 @@ export default function Layout({ children }: LayoutProps) {
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              John Doe
+              {user?.name || 'User'}
             </Typography>
-            <Avatar
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                cursor: 'pointer',
+            <IconButton onClick={handleMenuOpen} size="small">
+              <Avatar
+                sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                }}
+              >
+                {user?.name?.[0] || 'U'}
+              </Avatar>
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
               }}
             >
-              JD
-            </Avatar>
+              <MenuItem onClick={handleMenuClose}>
+                <ListItemIcon>
+                  <AccountIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>{user?.email}</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Logout</ListItemText>
+              </MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </AppBar>

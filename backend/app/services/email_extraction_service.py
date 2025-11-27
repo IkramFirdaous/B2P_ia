@@ -76,7 +76,7 @@ class EmailExtractionService:
         
         # Skip automated/promotional emails (already filtered by Gmail service)
         if email_data.get('is_automated', False):
-            print(f"⚠️  Skipping automated email from: {email_data.get('sender', 'unknown')}")
+            print(f"[WARNING] Skipping automated email from: {email_data.get('sender', 'unknown')}")
             return None
         
         # Check if email already processed

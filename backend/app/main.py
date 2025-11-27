@@ -33,11 +33,11 @@ async def startup_event():
     # Initialize database (optional - will work without DB for API testing)
     try:
         init_db()
-        print("✅ Database initialized successfully")
+        print("[OK] Database initialized successfully")
     except Exception as e:
-        print(f"⚠️  Database connection failed: {e}")
-        print("⚠️  Backend will run without database (limited functionality)")
-        print("⚠️  To enable database: Set DATABASE_URL in .env or use SQLite")
+        print(f"[WARNING] Database connection failed: {e}")
+        print("[WARNING] Backend will run without database (limited functionality)")
+        print("[WARNING] To enable database: Set DATABASE_URL in .env or use SQLite")
 
     print("Application startup complete")
 
@@ -69,8 +69,9 @@ async def health_check():
 
 
 # Import and include API routers
-from app.api.v1 import tasks, employees, analytics, agent, email_extraction
+from app.api.v1 import tasks, employees, analytics, agent, email_extraction, auth
 
+app.include_router(auth.router, prefix=settings.API_V1_PREFIX, tags=["authentication"])
 app.include_router(tasks.router, prefix=settings.API_V1_PREFIX, tags=["tasks"])
 app.include_router(employees.router, prefix=settings.API_V1_PREFIX, tags=["employees"])
 app.include_router(analytics.router, prefix=settings.API_V1_PREFIX, tags=["analytics"])

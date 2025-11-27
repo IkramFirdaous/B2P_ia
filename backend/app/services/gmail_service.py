@@ -19,9 +19,12 @@ class GmailService:
     """Service for Gmail API integration with OAuth2"""
     
     # Gmail API scopes
-    # Note: gmail.readonly includes all metadata capabilities, so we only need this one
+    # Include all scopes that Google will return (to avoid scope mismatch errors)
     SCOPES = [
-        'https://www.googleapis.com/auth/gmail.readonly'
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'openid'
     ]
     
     def __init__(self, db: Session):
@@ -62,24 +65,16 @@ class GmailService:
         
         return authorization_url, state
     
-    def handle_oauth_callback(self, code: str, state: str) -> EmailCredential:
+    def exchange_code_for_token(self, code: str) -> Credentials:
         """
-        Handle OAuth2 callback and store credentials
+        Exchange authorization code for OAuth2 credentials
         
         Args:
             code: Authorization code from Google
-            state: State parameter containing employee_id
             
         Returns:
-            EmailCredential object
+            Google OAuth2 Credentials object
         """
-        # Extract employee_id from state
-        employee_id_str, _ = state.split(':', 1)
-        
-        # Exchange code for tokens
-        import warnings
-        from warnings import warn
-        
         flow = Flow.from_client_config(
             {
                 "web": {
@@ -94,57 +89,77 @@ class GmailService:
             redirect_uri=settings.GMAIL_REDIRECT_URI
         )
         
-        # Fetch token - Google OAuth library raises UserWarning for scope changes
-        # We need to catch this and continue anyway
-        credentials = None
-        
+        # Fetch token - With all required scopes, there should be no scope mismatch
         try:
-            # Try normal token fetch
             flow.fetch_token(code=code)
             credentials = flow.credentials
-            print(f"✅ Successfully fetched OAuth token")
             
-        except UserWarning as w:
-            # Scope mismatch warning - get credentials anyway
-            warning_msg = str(w)
-            print(f"⚠️  OAuth warning (continuing): {warning_msg}")
-            
-            # Credentials should still be available
-            credentials = flow.credentials
             if not credentials or not credentials.token:
-                raise ValueError(f"OAuth warning occurred but no credentials available: {warning_msg}")
-                
-            print(f"✅ Token fetched successfully despite scope warning")
+                raise ValueError("No credentials or token received from OAuth flow")
+            
+            print(f"[OK] Successfully fetched OAuth token: {credentials.token[:20]}...")
+            return credentials
             
         except Exception as e:
             error_msg = str(e)
+            print(f"[ERROR] OAuth token exchange failed: {error_msg}")
+            raise ValueError(f"Failed to obtain OAuth credentials: {error_msg}")
+    
+    def get_user_info(self, credentials: Credentials) -> Dict:
+        """
+        Get user profile information from Google OAuth2 userinfo API
+        
+        Args:
+            credentials: Google OAuth2 Credentials
             
-            # Check if error message indicates it's just a scope warning
-            if "Scope has changed" in error_msg or "Warning" in error_msg:
-                print(f"⚠️  Scope change detected (attempting to continue): {error_msg}")
-                
-                # Try to get credentials even though there was an exception
-                try:
-                    credentials = flow.credentials
-                    if credentials and credentials.token:
-                        print(f"✅ Credentials obtained despite scope warning")
-                    else:
-                        raise ValueError("No valid credentials after scope warning")
-                except AttributeError:
-                    raise ValueError(f"Cannot obtain credentials after scope error: {error_msg}")
-            else:
-                print(f"❌ Token fetch failed: {error_msg}")
-                raise
+        Returns:
+            Dict with user info (email, name, given_name, family_name, picture)
+        """
+        # Use OAuth2 API to get full user profile (name, email, picture)
+        import requests
         
-        if not credentials or not credentials.token:
-            raise ValueError("Failed to obtain valid OAuth credentials")
+        headers = {'Authorization': f'Bearer {credentials.token}'}
+        response = requests.get('https://www.googleapis.com/oauth2/v2/userinfo', headers=headers)
         
-        print(f"   Access token: {credentials.token[:20]}...")
+        if response.status_code == 200:
+            userinfo = response.json()
+            # Map to consistent format
+            return {
+                'emailAddress': userinfo.get('email', ''),
+                'name': userinfo.get('name', ''),
+                'given_name': userinfo.get('given_name', ''),
+                'family_name': userinfo.get('family_name', ''),
+                'picture': userinfo.get('picture', '')
+            }
+        else:
+            # Fallback to Gmail API if userinfo fails
+            service = build('gmail', 'v1', credentials=credentials)
+            profile = service.users().getProfile(userId='me').execute()
+            return {
+                'emailAddress': profile.get('emailAddress', ''),
+                'name': profile.get('emailAddress', '').split('@')[0]
+            }
+    
+    def handle_oauth_callback(self, code: str, state: str) -> EmailCredential:
+        """
+        Handle OAuth2 callback and store credentials (legacy method for email extraction)
+        
+        Args:
+            code: Authorization code from Google
+            state: State parameter containing employee_id
+            
+        Returns:
+            EmailCredential object
+        """
+        # Extract employee_id from state
+        employee_id_str, _ = state.split(':', 1)
+        
+        # Exchange code for tokens
+        credentials = self.exchange_code_for_token(code)
         
         # Get email address
-        service = build('gmail', 'v1', credentials=credentials)
-        profile = service.users().getProfile(userId='me').execute()
-        email_address = profile.get('emailAddress')
+        user_info = self.get_user_info(credentials)
+        email_address = user_info.get('emailAddress')
         
         # Store or update credentials
         try:
@@ -174,12 +189,12 @@ class GmailService:
             
             self.db.commit()
             self.db.refresh(credential)
-            print(f"✅ Successfully saved Gmail credentials for {email_address}")
+            print(f"[OK] Successfully saved Gmail credentials for {email_address}")
             
             return credential
         except Exception as e:
             self.db.rollback()
-            print(f"❌ ERROR saving credentials: {type(e).__name__}: {str(e)}")
+            print(f"[ERROR] Saving credentials failed: {type(e).__name__}: {str(e)}")
             raise
     
     def _get_credentials(self, employee_id: str) -> Optional[Credentials]:
@@ -261,7 +276,7 @@ class GmailService:
             query_parts.append('-from:notifications')
             
             query = ' '.join(query_parts)
-            print(f"📧 Gmail query: {query}")
+            print(f"[INFO] Gmail query: {query}")
             
             # List messages
             results = service.users().messages().list(
@@ -271,7 +286,7 @@ class GmailService:
             ).execute()
             
             messages = results.get('messages', [])
-            print(f"📨 Found {len(messages)} messages from Gmail API")
+            print(f"[INFO] Found {len(messages)} messages from Gmail API")
             
             emails = []
             filtered_count = 0
@@ -290,13 +305,13 @@ class GmailService:
                 # Filter out automated/promotional emails
                 if email_data.get('is_automated', False):
                     filtered_count += 1
-                    print(f"   🚫 Filtered automated email from: {email_data['sender'][:50]}")
+                    print(f"[FILTERED] Automated email from: {email_data['sender'][:50]}")
                     continue
                 
-                print(f"   ✅ Real email from: {email_data['sender'][:50]}")
+                print(f"[OK] Real email from: {email_data['sender'][:50]}")
                 emails.append(email_data)
             
-            print(f"📊 Result: {len(emails)} real work emails, {filtered_count} automated/promotional filtered")
+            print(f"[RESULT] {len(emails)} real work emails, {filtered_count} automated/promotional filtered")
             return emails
             
         except HttpError as error:

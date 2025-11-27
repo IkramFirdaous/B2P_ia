@@ -41,7 +41,10 @@ class Settings(BaseSettings):
     # Gmail API Configuration
     GMAIL_CLIENT_ID: str = ""
     GMAIL_CLIENT_SECRET: str = ""
-    GMAIL_REDIRECT_URI: str = "http://localhost:8000/api/v1/email-extraction/oauth/callback"
+    GMAIL_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/callback"
+    
+    # Legacy redirect URI for email extraction (backward compatibility)
+    GMAIL_EXTRACTION_REDIRECT_URI: str = "http://localhost:8000/api/v1/email-extraction/oauth/callback"
     
     # Gemini API Configuration
     GEMINI_API_KEY: str = ""

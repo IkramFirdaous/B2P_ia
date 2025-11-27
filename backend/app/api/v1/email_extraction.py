@@ -67,7 +67,7 @@ def disconnect_gmail(
     if credential:
         db.delete(credential)
         db.commit()
-        print(f"✅ Disconnected Gmail for employee {employee_id}")
+        print(f"[OK] Disconnected Gmail for employee {employee_id}")
     
     return {"message": "Gmail disconnected successfully"}
 
@@ -101,12 +101,12 @@ def gmail_oauth_callback(
     db: Session = Depends(get_db)
 ):
     """Handle Gmail OAuth callback"""
-    print(f"📧 OAuth callback received - State: {state[:50]}...")
+    print(f"[INFO] OAuth callback received - State: {state[:50]}...")
     gmail_service = GmailService(db)
     
     try:
         credential = gmail_service.handle_oauth_callback(code, state)
-        print(f"✅ OAuth callback successful for {credential.email_address}")
+        print(f"[OK] OAuth callback successful for {credential.email_address}")
         
         # Redirect to frontend success page
         return RedirectResponse(
@@ -114,7 +114,7 @@ def gmail_oauth_callback(
             status_code=status.HTTP_302_FOUND
         )
     except Exception as e:
-        print(f"❌ OAuth callback error: {type(e).__name__}: {str(e)}")
+        print(f"[ERROR] OAuth callback error: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
         # Redirect to frontend error page
