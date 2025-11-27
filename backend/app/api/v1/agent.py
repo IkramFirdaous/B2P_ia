@@ -4,6 +4,7 @@ Unified API for all AI features through intelligent agent routing
 """
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, List
+from sqlalchemy.orm import Session
 
 from app.services.multi_agent_system import (
     orchestrator,
@@ -11,12 +12,13 @@ from app.services.multi_agent_system import (
     AgentResponse,
     AgentType
 )
+from app.core.database import get_db
 
 router = APIRouter()
 
 
 @router.post("/agent/execute", response_model=AgentResponse)
-async def execute_agent_task(request: AgentRequest):
+async def execute_agent_task(request: AgentRequest, db: Session = Depends(get_db)):
     """
     Execute a task using the multi-agent system
 
@@ -35,12 +37,13 @@ async def execute_agent_task(request: AgentRequest):
             - context: Additional context (employee_id, team_id, text, etc.)
             - agent_type: (Optional) Force a specific agent
             - auto_detect: Whether to auto-detect the best agent (default: True)
+        db: Database session (injected)
 
     Returns:
         AgentResponse with results and suggestions
     """
     try:
-        response = await orchestrator.execute(request)
+        response = await orchestrator.execute(request, db)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -65,7 +68,8 @@ async def smart_assist(
     query: str,
     employee_id: int = None,
     team_id: int = None,
-    additional_context: Dict[str, Any] = {}
+    additional_context: Dict[str, Any] = {},
+    db: Session = Depends(get_db)
 ):
     """
     Smart assistant endpoint - just ask a question in natural language
@@ -83,6 +87,7 @@ async def smart_assist(
         employee_id: Optional employee ID
         team_id: Optional team ID
         additional_context: Any additional context data
+        db: Database session (injected)
 
     Returns:
         AgentResponse with results
@@ -102,14 +107,14 @@ async def smart_assist(
     )
 
     try:
-        response = await orchestrator.execute(request)
+        response = await orchestrator.execute(request, db)
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/agent/batch")
-async def batch_execute(requests: List[AgentRequest]):
+async def batch_execute(requests: List[AgentRequest], db: Session = Depends(get_db)):
     """
     Execute multiple agent requests in batch
 
@@ -117,6 +122,7 @@ async def batch_execute(requests: List[AgentRequest]):
 
     Args:
         requests: List of AgentRequest objects
+        db: Database session (injected)
 
     Returns:
         List of AgentResponse objects
@@ -124,7 +130,7 @@ async def batch_execute(requests: List[AgentRequest]):
     results = []
     for request in requests:
         try:
-            response = await orchestrator.execute(request)
+            response = await orchestrator.execute(request, db)
             results.append(response)
         except Exception as e:
             results.append(
@@ -211,7 +217,8 @@ async def get_examples():
 async def execute_workflow(
     workflow_type: str,
     employee_id: int = None,
-    team_id: int = None
+    team_id: int = None,
+    db: Session = Depends(get_db)
 ):
     """
     Execute pre-defined workflows that use multiple agents
@@ -225,6 +232,7 @@ async def execute_workflow(
         workflow_type: Type of workflow to execute
         employee_id: Optional employee ID
         team_id: Optional team ID
+        db: Database session (injected)
 
     Returns:
         Workflow results from multiple agents
@@ -273,7 +281,7 @@ async def execute_workflow(
 
     for request in requests:
         try:
-            response = await orchestrator.execute(request)
+            response = await orchestrator.execute(request, db)
             results.append(response)
         except Exception as e:
             results.append(

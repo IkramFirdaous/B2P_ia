@@ -1,9 +1,8 @@
 """Skill and EmployeeSkill database models"""
 from sqlalchemy import Column, String, ForeignKey, Enum
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
-from .base import BaseModel
+from .base import BaseModel, UUID
 
 
 class SkillCategory(str, enum.Enum):
@@ -39,8 +38,8 @@ class EmployeeSkill(BaseModel):
     """Many-to-many relationship between Employee and Skill with level"""
     __tablename__ = "employee_skills"
 
-    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
-    skill_id = Column(UUID(as_uuid=True), ForeignKey("skills.id"), nullable=False)
+    employee_id = Column(UUID(), ForeignKey("employees.id"), nullable=False)
+    skill_id = Column(UUID(), ForeignKey("skills.id"), nullable=False)
     level = Column(Enum(SkillLevel), nullable=False, default=SkillLevel.BEGINNER)
 
     # Relationships

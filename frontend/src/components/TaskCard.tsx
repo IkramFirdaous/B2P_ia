@@ -1,6 +1,7 @@
 /**
  * Task Card Component - Displays individual task with priority
  */
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -10,11 +11,25 @@ import {
   IconButton,
   LinearProgress,
   Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   MoreVert as MoreIcon,
   Flag as FlagIcon,
   AccessTime as TimeIcon,
+  PlayArrow as StartIcon,
+  CheckCircle as CompleteIcon,
+  Block as BlockIcon,
+  Pending as PendingIcon,
+  Mail as EmailIcon,
+  EditNote as ManualIcon,
+  PersonAdd as AssignedIcon,
+  CalendarMonth as CalendarIcon,
+  Group as MeetingIcon,
+  Psychology as DifficultyIcon,
 } from '@mui/icons-material';
 import { Task, TaskStatus } from '../types/Task';
 import { format } from 'date-fns';
@@ -22,6 +37,7 @@ import { format } from 'date-fns';
 interface TaskCardProps {
   task: Task;
   onClick?: () => void;
+  onStatusChange?: (taskId: string, newStatus: TaskStatus) => Promise<void>;
 }
 
 const statusColors: Record<TaskStatus, string> = {
@@ -33,10 +49,55 @@ const statusColors: Record<TaskStatus, string> = {
 };
 
 const urgencyColors = ['#4CAF50', '#8BC34A', '#FFC107', '#FF9800', '#F44336'];
+const difficultyColors = ['#4CAF50', '#8BC34A', '#FFC107', '#FF9800', '#F44336'];
 
-export default function TaskCard({ task, onClick }: TaskCardProps) {
+// Source badge configuration
+const sourceConfig: Record<string, { icon: JSX.Element; color: string; label: string }> = {
+  email: { icon: <EmailIcon fontSize="small" />, color: '#4A90E2', label: 'Email' },
+  manual: { icon: <ManualIcon fontSize="small" />, color: '#7ED321', label: 'Manual' },
+  assigned: { icon: <AssignedIcon fontSize="small" />, color: '#F5A623', label: 'Assigned' },
+  meeting: { icon: <MeetingIcon fontSize="small" />, color: '#BD10E0', label: 'Meeting' },
+  calendar: { icon: <CalendarIcon fontSize="small" />, color: '#50E3C2', label: 'Calendar' },
+};
+
+const statusOptions = [
+  { value: TaskStatus.PENDING, label: 'Pending', icon: <PendingIcon fontSize="small" /> },
+  { value: TaskStatus.IN_PROGRESS, label: 'In Progress', icon: <StartIcon fontSize="small" /> },
+  { value: TaskStatus.COMPLETED, label: 'Completed', icon: <CompleteIcon fontSize="small" /> },
+  { value: TaskStatus.BLOCKED, label: 'Blocked', icon: <BlockIcon fontSize="small" /> },
+];
+
+export default function TaskCard({ task, onClick, onStatusChange }: TaskCardProps) {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [updating, setUpdating] = useState(false);
   const priorityScore = task.priority_score || 0;
   const urgencyColor = urgencyColors[task.urgency - 1] || '#9E9E9E';
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = (event?: React.MouseEvent) => {
+    if (event) event.stopPropagation();
+    setAnchorEl(null);
+  };
+
+  const handleStatusChange = async (newStatus: TaskStatus, event: React.MouseEvent) => {
+    event.stopPropagation();
+    handleMenuClose();
+
+    if (onStatusChange && task.id) {
+      setUpdating(true);
+      try {
+        await onStatusChange(task.id, newStatus);
+      } catch (error) {
+        console.error('Failed to update task status:', error);
+      } finally {
+        setUpdating(false);
+      }
+    }
+  };
 
   const getPriorityLabel = (score: number) => {
     if (score >= 0.8) return 'Critical';
@@ -44,6 +105,20 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
     if (score >= 0.4) return 'Medium';
     return 'Low';
   };
+
+  const getDifficultyLabel = (difficulty: number) => {
+    const labels = ['', 'Easy', 'Medium-Easy', 'Medium', 'Hard', 'Very Hard'];
+    return labels[difficulty] || 'Medium';
+  };
+
+  const getDifficultyColor = (difficulty: number) => {
+    return difficultyColors[difficulty - 1] || '#9E9E9E';
+  };
+
+  const taskSource = task.source || 'manual';
+  const sourceInfo = sourceConfig[taskSource] || sourceConfig.manual;
+  const difficulty = task.difficulty || 3;
+  const difficultyColor = getDifficultyColor(difficulty);
 
   return (
     <Card
@@ -61,7 +136,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
     >
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             <Chip
               label={task.status.replace('_', ' ')}
               size="small"
@@ -73,6 +148,35 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
                 fontSize: '0.7rem',
               }}
             />
+            <Tooltip title={`Source: ${sourceInfo.label}`}>
+              <Chip
+                icon={sourceInfo.icon}
+                label={sourceInfo.label}
+                size="small"
+                sx={{
+                  backgroundColor: sourceInfo.color,
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  '& .MuiChip-icon': { color: 'white' },
+                }}
+              />
+            </Tooltip>
+            <Tooltip title={`Difficulty: ${getDifficultyLabel(difficulty)}`}>
+              <Chip
+                icon={<DifficultyIcon />}
+                label={`Difficulty ${difficulty}/5`}
+                size="small"
+                variant="outlined"
+                sx={{
+                  borderColor: difficultyColor,
+                  color: difficultyColor,
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  '& .MuiChip-icon': { color: difficultyColor },
+                }}
+              />
+            </Tooltip>
             <Chip
               icon={<FlagIcon />}
               label={getPriorityLabel(priorityScore)}
@@ -85,10 +189,35 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
               }}
             />
           </Box>
-          <IconButton size="small">
+          <IconButton size="small" onClick={handleMenuClick} disabled={updating}>
             <MoreIcon />
           </IconButton>
         </Box>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => handleMenuClose()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MenuItem disabled sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+            Change Status
+          </MenuItem>
+          {statusOptions.map((option) => (
+            <MenuItem
+              key={option.value}
+              onClick={(e) => handleStatusChange(option.value, e)}
+              disabled={task.status === option.value}
+              sx={{
+                backgroundColor:
+                  task.status === option.value ? 'action.selected' : 'transparent',
+              }}
+            >
+              <ListItemIcon>{option.icon}</ListItemIcon>
+              <ListItemText>{option.label}</ListItemText>
+            </MenuItem>
+          ))}
+        </Menu>
 
         <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
           {task.title}

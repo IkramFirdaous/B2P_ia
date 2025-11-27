@@ -18,10 +18,23 @@
 
 B2P.AI is an intelligent workplace management system that combines AI-powered task prioritization with real-time burnout detection. It helps organizations optimize workload distribution, prevent employee burnout, and boost productivity through data-driven insights.
 
+### 📚 Documentation
+
+- **[Guide d'Utilisation Complet](./GUIDE_UTILISATION.md)** - Installation, configuration, exemples détaillés (Français)
+- **[API Documentation](http://localhost:8000/docs)** - Swagger UI interactive (après démarrage du backend)
+
+### ✨ Recent Improvements (v2.0 - Architecture simplifiée)
+
+- ✅ **Code consolidation** - Reduced ~256 lines by merging duplicate NLP extraction
+- ✅ **Fixed DB session management** - Proper dependency injection in multi-agent system
+- ✅ **Advanced NLP** - spaCy integration with intelligent rule-based fallback
+- ✅ **Multi-agent orchestrator** - Unified AI interface with auto-routing
+
 ### Key Features
 
 - 🤖 **AI Task Prioritization**: Automatic task scoring based on urgency, deadlines, effort, and employee productivity patterns
-- 🧠 **NLP Task Extraction**: Extract tasks from emails and meeting notes using Natural Language Processing
+- 🧠 **NLP Task Extraction**: Extract tasks from emails and meeting notes using Natural Language Processing (spaCy)
+- 🎯 **Multi-Agent System**: Intelligent routing to specialized AI agents
 - 📊 **Burnout Detection**: Real-time monitoring of employee wellbeing indicators with predictive analytics
 - ⚖️ **Workload Balancing**: Equitable task distribution across teams with automated recommendations
 - 🏆 **Achievement Tracking**: Automatic recognition of employee accomplishments
@@ -36,17 +49,16 @@ B2P.AI is an intelligent workplace management system that combines AI-powered ta
 **Backend:**
 - FastAPI (Python 3.11+)
 - PostgreSQL (Database)
-- Redis (Cache & Task Queue)
 - SQLAlchemy (ORM)
-- spaCy & Transformers (NLP/ML)
-- Celery (Background Tasks)
+- spaCy (NLP/ML) ✨
+- Pydantic (Validation)
 
 **Frontend:**
 - React 18 + TypeScript
-- Material-UI
-- Redux Toolkit (State Management)
+- Material-UI (UI Components)
 - Recharts (Visualizations)
 - Axios (API Client)
+- Local State Management (useState/useContext)
 
 **DevOps:**
 - Docker & Docker Compose
@@ -93,7 +105,6 @@ b2p-ai/
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL 14+
-- Redis 7+
 - Docker & Docker Compose (optional)
 
 ### Installation
@@ -166,18 +177,20 @@ npm start
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/b2p_ai
 
-# Redis
-REDIS_URL=redis://localhost:6379
-
 # Security
 SECRET_KEY=your-secret-key-change-in-production
+ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 # CORS
-BACKEND_CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+BACKEND_CORS_ORIGINS=["http://localhost:3000","http://localhost:8000"]
 
 # Environment
 ENVIRONMENT=development
+DEBUG=true
+
+# NLP (optional - uses fallback if model not found)
+SPACY_MODEL=fr_core_news_lg
 ```
 
 ### Frontend Configuration (`.env`)
@@ -196,16 +209,24 @@ Once the backend is running, visit:
 
 ### Key Endpoints
 
+#### ✨ Multi-Agent System (Recommended)
+- `POST /api/v1/agent/execute` - Execute any AI task with auto-routing
+- `POST /api/v1/agent/smart-assist` - Simplified natural language interface
+- `POST /api/v1/agent/workflow` - Pre-defined workflows (daily_briefing, team_health)
+- `GET /api/v1/agent/available` - List all available agents
+- `GET /api/v1/agent/examples` - Get example queries
+
 #### Tasks
 - `POST /api/v1/tasks` - Create task
 - `GET /api/v1/tasks` - List tasks
 - `GET /api/v1/tasks/employee/{id}/prioritized` - Get prioritized tasks
-- `POST /api/v1/tasks/extract` - Extract tasks from text (NLP)
+- `POST /api/v1/tasks/extract` - Extract tasks from text (NLP with spaCy)
 
 #### Analytics
 - `GET /api/v1/analytics/burnout/{employee_id}` - Get burnout risk
 - `GET /api/v1/analytics/team/{team_id}/equity` - Team workload equity
 - `POST /api/v1/analytics/track-activity` - Track daily activity
+- `POST /api/v1/analytics/detect-achievements` - Auto-detect achievements
 
 #### Employees
 - `POST /api/v1/employees` - Create employee
@@ -229,6 +250,28 @@ npm test
 
 ## 🤖 AI Features
 
+### ✨ Multi-Agent Orchestrator (NOUVEAU)
+
+Un système unifié qui route intelligemment vos requêtes vers l'agent approprié :
+
+```python
+# Détection automatique de l'agent
+POST /api/v1/agent/execute
+{
+  "task": "What should I work on next?",
+  "context": {"employee_id": 1},
+  "auto_detect": true
+}
+# → Routé automatiquement vers Task Prioritization Agent
+```
+
+**Agents disponibles** :
+- 🎯 Task Prioritization - Priorise les tâches
+- 🧠 Burnout Detection - Détecte le risque de burnout
+- ⚖️ Workload Balancing - Équilibre la charge de travail
+- 📝 Task Extraction - Extrait des tâches depuis du texte (NLP)
+- 🏆 Recognition - Détecte les accomplissements
+
 ### 1. Task Prioritization Algorithm
 
 ```
@@ -249,6 +292,15 @@ Risk = 0.3×Hours + 0.25×CognitiveLoad + 0.2×Isolation
 Global Score = 0.6 × Cumulative_Load + 0.4 × Critical_Score
 ```
 
+### 4. NLP Task Extraction
+
+Utilise **spaCy** avec analyse de dépendances et NER :
+- Extraction automatique d'action-verbe-objet
+- Détection de deadlines ("avant vendredi", "dans 3 jours")
+- Estimation d'urgence et d'effort
+- Scoring de confiance
+- Fallback rule-based si spaCy non disponible
+
 ---
 
 ## 🗺️ Roadmap
@@ -259,8 +311,9 @@ Global Score = 0.6 × Cumulative_Load + 0.4 × Critical_Score
 - [x] API endpoints
 - [x] Basic frontend structure
 
-### Phase 2: AI Features 🚧
-- [ ] NLP task extraction (spaCy integration)
+### Phase 2: AI Features ✅
+- [x] NLP task extraction (spaCy integration) ✨ **NOUVEAU**
+- [x] Multi-agent orchestrator system ✨ **NOUVEAU**
 - [ ] Sentiment analysis
 - [ ] ML burnout prediction model
 - [ ] Skill gap analysis

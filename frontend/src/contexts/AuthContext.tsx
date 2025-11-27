@@ -19,7 +19,6 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
-  isManager: boolean; // Helper to check if user is a manager
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,8 +109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     register,
     logout,
     isAuthenticated: !!token && !!user,
-    loading,
-    isManager: user?.role?.toLowerCase() === 'manager'
+    loading
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

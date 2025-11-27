@@ -1,7 +1,7 @@
 /**
  * Analytics Page - Burnout metrics and performance analytics
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,7 +12,29 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Button,
+  CircularProgress,
+  Alert,
+  Chip,
+  LinearProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Paper,
 } from '@mui/material';
+import {
+  Refresh as RefreshIcon,
+  WorkOutline as WorkloadIcon,
+  Psychology as StressIcon,
+  LocalFireDepartment as BurnoutIcon,
+  Lightbulb as CognitiveIcon,
+  Warning as WarningIcon,
+  CheckCircle as SuccessIcon,
+  TipsAndUpdates as TipsIcon,
+  CalendarToday as OverlapIcon,
+} from '@mui/icons-material';
 import {
   LineChart,
   Line,
@@ -28,8 +50,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import BurnoutAlert from '../components/BurnoutAlert';
 import { BurnoutRiskResponse } from '../types/Analytics';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
 
 const mockBurnoutData: BurnoutRiskResponse = {
   employee_id: 'user-1',
@@ -73,51 +99,155 @@ const productivityData = [
 ];
 
 export default function Analytics() {
+  const { user, token } = useAuth();
   const [timeRange, setTimeRange] = useState('7days');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [burnoutData, setBurnoutData] = useState<BurnoutRiskResponse | null>(null);
+  const [burnoutMetrics, setBurnoutMetrics] = useState<any[]>([]);
+  const [taskStats, setTaskStats] = useState<any[]>([]);
+
+  // Fetch analytics data
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [timeRange]);
+
+  const fetchAnalyticsData = async () => {
+    if (!token || !user) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch burnout risk analysis
+      const burnoutResponse = await axios.get(`${API_URL}/analytics/burnout/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBurnoutData(burnoutResponse.data);
+
+      // Fetch historical burnout metrics
+      const days = timeRange === '7days' ? 7 : timeRange === '30days' ? 30 : 90;
+      const metricsResponse = await axios.get(`${API_URL}/analytics/burnout/${user.id}/metrics`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { days }
+      });
+      setBurnoutMetrics(metricsResponse.data);
+
+      // Fetch task statistics
+      const tasksResponse = await axios.get(`${API_URL}/tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { assigned_to: user.id }
+      });
+
+      const tasks = tasksResponse.data;
+      const stats = [
+        {
+          name: 'Completed',
+          value: tasks.filter((t: any) => t.status === 'completed').length,
+          color: '#4CAF50'
+        },
+        {
+          name: 'In Progress',
+          value: tasks.filter((t: any) => t.status === 'in_progress').length,
+          color: '#2196F3'
+        },
+        {
+          name: 'Pending',
+          value: tasks.filter((t: any) => t.status === 'pending').length,
+          color: '#FFC107'
+        },
+      ];
+      setTaskStats(stats);
+    } catch (err: any) {
+      console.error('Failed to fetch analytics:', err);
+      setError(err.response?.data?.detail || 'Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchAnalyticsData();
+  };
 
   return (
     <Box>
+      {/* Error Display */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={700} gutterBottom>
-            Analytics & Insights 📊
+            Analytics & Insights
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Track your performance and wellbeing metrics
           </Typography>
         </Box>
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Time Range</InputLabel>
-          <Select
-            value={timeRange}
-            label="Time Range"
-            onChange={(e) => setTimeRange(e.target.value)}
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+            onClick={handleRefresh}
+            disabled={loading}
+            sx={{
+              borderColor: '#667eea',
+              color: '#667eea',
+              '&:hover': {
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(102, 126, 234, 0.04)',
+              },
+            }}
           >
-            <MenuItem value="7days">Last 7 Days</MenuItem>
-            <MenuItem value="30days">Last 30 Days</MenuItem>
-            <MenuItem value="90days">Last 90 Days</MenuItem>
-          </Select>
-        </FormControl>
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <FormControl sx={{ minWidth: 150 }}>
+            <InputLabel>Time Range</InputLabel>
+            <Select
+              value={timeRange}
+              label="Time Range"
+              onChange={(e) => setTimeRange(e.target.value)}
+              disabled={loading}
+            >
+              <MenuItem value="7days">Last 7 Days</MenuItem>
+              <MenuItem value="30days">Last 30 Days</MenuItem>
+              <MenuItem value="90days">Last 90 Days</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
 
       {/* Burnout Alert */}
-      <BurnoutAlert burnoutData={mockBurnoutData} />
+      {burnoutData && <BurnoutAlert burnoutData={burnoutData} />}
 
       {/* Charts */}
-      <Grid container spacing={3}>
-        {/* Burnout Risk Trend */}
-        <Grid item xs={12} lg={8}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight={700} gutterBottom>
-                Burnout Risk Trend
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Daily burnout risk score and work patterns
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={burnoutTrendData}>
+      {loading && !burnoutData ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={3}>
+          {/* Burnout Risk Trend */}
+          <Grid item xs={12} lg={8}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight={700} gutterBottom>
+                  Burnout Risk Trend
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Daily burnout risk score and work patterns
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={burnoutMetrics.length > 0 ? burnoutMetrics.map(m => ({
+                    date: new Date(m.date).toLocaleDateString('en-US', { weekday: 'short' }),
+                    risk: m.burnout_score,
+                    hours: m.hours_worked,
+                  })).reverse() : burnoutTrendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="date" />
                   <YAxis />
@@ -151,20 +281,20 @@ export default function Analytics() {
           </Card>
         </Grid>
 
-        {/* Task Distribution */}
-        <Grid item xs={12} lg={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" fontWeight={700} gutterBottom>
-                Task Distribution
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Current task status breakdown
-              </Typography>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={taskDistributionData}
+          {/* Task Distribution */}
+          <Grid item xs={12} lg={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" fontWeight={700} gutterBottom>
+                  Task Distribution
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Current task status breakdown
+                </Typography>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={taskStats.length > 0 ? taskStats : taskDistributionData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -227,7 +357,10 @@ export default function Analytics() {
               </Typography>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart
-                  data={Object.entries(mockBurnoutData.factors).map(([key, value]) => ({
+                  data={burnoutData ? Object.entries(burnoutData.factors).map(([key, value]) => ({
+                    factor: key.replace(/_/g, ' '),
+                    value: value * 100,
+                  })) : Object.entries(mockBurnoutData.factors).map(([key, value]) => ({
                     factor: key.replace(/_/g, ' '),
                     value: value * 100,
                   }))}
@@ -250,6 +383,7 @@ export default function Analytics() {
           </Card>
         </Grid>
       </Grid>
+      )}
     </Box>
   );
 }

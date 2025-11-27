@@ -1,6 +1,6 @@
 """Analytics and Burnout Pydantic schemas"""
 from datetime import date, datetime
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -46,7 +46,7 @@ class TeamEquityResponse(BaseModel):
     team_id: UUID
     team_name: str
     equity_score: float = Field(..., ge=0, le=1)  # 1 = perfect equity
-    member_workloads: List[Dict[str, any]]
+    member_workloads: List[Dict[str, Any]]
     recommendations: List[str]
 
 

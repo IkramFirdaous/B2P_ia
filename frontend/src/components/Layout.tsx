@@ -18,6 +18,8 @@ import {
   Avatar,
   useTheme,
   useMediaQuery,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -27,8 +29,11 @@ import {
   Analytics as AnalyticsIcon,
   Psychology as AIIcon,
   AutoAwesome as AIAssistantIcon,
+  Logout as LogoutIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const drawerWidth = 240;
 
@@ -40,12 +45,15 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'AI Assistant', icon: <AIAssistantIcon />, path: '/ai-assistant' },
   { text: 'Tasks', icon: <TaskIcon />, path: '/tasks' },
+  { text: 'Employees', icon: <PeopleIcon />, path: '/employees' },
   { text: 'Team', icon: <PeopleIcon />, path: '/team' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
 ];
 
 export default function Layout({ children }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -53,6 +61,29 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleMenuClose();
+    navigate('/login');
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const drawer = (
@@ -138,17 +169,59 @@ export default function Layout({ children }: LayoutProps) {
           </IconButton>
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
-              John Doe
-            </Typography>
+            <Box sx={{ display: { xs: 'none', sm: 'block' }, textAlign: 'right' }}>
+              <Typography variant="body2" fontWeight={600}>
+                {user?.name || 'User'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {user?.role || 'Employee'}
+              </Typography>
+            </Box>
             <Avatar
+              onClick={handleMenuOpen}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 cursor: 'pointer',
               }}
             >
-              JD
+              {user?.name ? getInitials(user.name) : 'U'}
             </Avatar>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+            >
+              <MenuItem disabled>
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    {user?.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {user?.email}
+                  </Typography>
+                </Box>
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }}>
+                <ListItemIcon>
+                  <PersonIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Profile</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Logout</ListItemText>
+              </MenuItem>
+            </Menu>
           </Box>
         </Toolbar>
       </AppBar>

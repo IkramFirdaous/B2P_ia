@@ -1,9 +1,8 @@
 """Achievement database model"""
 from sqlalchemy import Column, String, Text, Float, Boolean, ForeignKey, Enum
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
-from .base import BaseModel
+from .base import BaseModel, UUID
 
 
 class AchievementType(str, enum.Enum):
@@ -19,7 +18,7 @@ class Achievement(BaseModel):
     """Employee achievements and recognition tracking"""
     __tablename__ = "achievements"
 
-    employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
+    employee_id = Column(UUID(), ForeignKey("employees.id"), nullable=False)
     type = Column(Enum(AchievementType), nullable=False)
 
     description = Column(Text, nullable=False)
@@ -32,7 +31,7 @@ class Achievement(BaseModel):
     recognition_note = Column(Text, nullable=True)
 
     # Related task (if applicable)
-    related_task_id = Column(UUID(as_uuid=True), nullable=True)
+    related_task_id = Column(UUID(), nullable=True)
 
     # Relationships
     employee = relationship("Employee", back_populates="achievements")

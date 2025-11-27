@@ -1,9 +1,8 @@
 """Employee-Team association table for many-to-many relationship"""
 from sqlalchemy import Column, ForeignKey, DateTime, Boolean, UniqueConstraint
-# UUID import removed - using GUID from base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .base import BaseModel, GUID
+from .base import BaseModel, UUID
 
 
 class EmployeeTeam(BaseModel):
@@ -16,13 +15,13 @@ class EmployeeTeam(BaseModel):
     __tablename__ = "employee_teams"
 
     employee_id = Column(
-        GUID(),
+        UUID(),
         ForeignKey("employees.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
     team_id = Column(
-        GUID(),
+        UUID(),
         ForeignKey("teams.id", ondelete="CASCADE"),
         nullable=False,
         index=True

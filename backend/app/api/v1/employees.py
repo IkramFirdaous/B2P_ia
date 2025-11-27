@@ -1,10 +1,11 @@
 """Employee Management API Endpoints"""
 from typing import List, Optional
 from uuid import UUID
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.models import Employee, Task
+from app.models import Employee, Task, EmployeeTeam, Team
 from app.schemas.employee_schema import (
     EmployeeCreate, EmployeeUpdate, EmployeeResponse, EmployeeWithStats
 )
@@ -40,7 +41,8 @@ def list_employees(
     query = db.query(Employee)
 
     if team_id:
-        query = query.filter(Employee.team_id == team_id)
+        # Filter by team using the many-to-many relationship
+        query = query.join(EmployeeTeam).filter(EmployeeTeam.team_id == team_id)
 
     employees = query.offset(skip).limit(limit).all()
     return employees
@@ -141,3 +143,158 @@ def delete_employee(employee_id: UUID, db: Session = Depends(get_db)):
     db.commit()
 
     return None
+
+
+# ============================================================================
+# Multi-Team Management Endpoints
+# ============================================================================
+
+@router.get("/employees/{employee_id}/teams")
+def get_employee_teams(employee_id: UUID, db: Session = Depends(get_db)):
+    """Get all teams that an employee belongs to"""
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    # Get all team memberships
+    employee_teams = db.query(EmployeeTeam).filter(
+        EmployeeTeam.employee_id == employee_id
+    ).all()
+
+    teams_data = []
+    for emp_team in employee_teams:
+        team = db.query(Team).filter(Team.id == emp_team.team_id).first()
+        if team:
+            teams_data.append({
+                "id": str(team.id),
+                "name": team.name,
+                "description": team.description,
+                "is_primary": emp_team.is_primary,
+                "joined_at": emp_team.joined_at.isoformat() if emp_team.joined_at else None,
+                "member_count": len(team.members) if team.members else 0
+            })
+
+    return {
+        "employee_id": str(employee_id),
+        "employee_name": employee.name,
+        "teams": teams_data,
+        "team_count": len(teams_data)
+    }
+
+
+@router.post("/employees/{employee_id}/teams/{team_id}")
+def add_employee_to_team(
+    employee_id: UUID,
+    team_id: UUID,
+    is_primary: bool = False,
+    db: Session = Depends(get_db)
+):
+    """Add an employee to a team"""
+    # Verify employee exists
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    # Verify team exists
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    # Check if employee is already in this team
+    existing = db.query(EmployeeTeam).filter(
+        EmployeeTeam.employee_id == employee_id,
+        EmployeeTeam.team_id == team_id
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Employee is already a member of this team"
+        )
+
+    # If this is being set as primary, unset other primary teams
+    if is_primary:
+        db.query(EmployeeTeam).filter(
+            EmployeeTeam.employee_id == employee_id,
+            EmployeeTeam.is_primary == True
+        ).update({"is_primary": False})
+
+    # Create the association
+    employee_team = EmployeeTeam(
+        employee_id=employee_id,
+        team_id=team_id,
+        is_primary=is_primary,
+        joined_at=datetime.now()
+    )
+    db.add(employee_team)
+    db.commit()
+    db.refresh(employee_team)
+
+    return {
+        "message": "Employee added to team successfully",
+        "employee_id": str(employee_id),
+        "team_id": str(team_id),
+        "is_primary": is_primary
+    }
+
+
+@router.delete("/employees/{employee_id}/teams/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_employee_from_team(
+    employee_id: UUID,
+    team_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Remove an employee from a team"""
+    # Find the association
+    employee_team = db.query(EmployeeTeam).filter(
+        EmployeeTeam.employee_id == employee_id,
+        EmployeeTeam.team_id == team_id
+    ).first()
+
+    if not employee_team:
+        raise HTTPException(
+            status_code=404,
+            detail="Employee is not a member of this team"
+        )
+
+    db.delete(employee_team)
+    db.commit()
+
+    return None
+
+
+@router.put("/employees/{employee_id}/teams/{team_id}/primary")
+def set_primary_team(
+    employee_id: UUID,
+    team_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Set a team as the employee's primary team"""
+    # Verify the employee is a member of this team
+    employee_team = db.query(EmployeeTeam).filter(
+        EmployeeTeam.employee_id == employee_id,
+        EmployeeTeam.team_id == team_id
+    ).first()
+
+    if not employee_team:
+        raise HTTPException(
+            status_code=404,
+            detail="Employee is not a member of this team"
+        )
+
+    # Unset all other primary teams for this employee
+    db.query(EmployeeTeam).filter(
+        EmployeeTeam.employee_id == employee_id,
+        EmployeeTeam.is_primary == True
+    ).update({"is_primary": False})
+
+    # Set this team as primary
+    employee_team.is_primary = True
+    db.commit()
+
+    return {
+        "message": "Primary team updated successfully",
+        "employee_id": str(employee_id),
+        "primary_team_id": str(team_id)
+    }

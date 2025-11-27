@@ -36,15 +36,21 @@ ENV/
 *~
 .DS_Store
 
-# Environment variables
+# Environment variables - IMPORTANT: Contains sensitive credentials
 .env
 .env.local
 .env.*.local
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
 
 # Logs
 logs/
@@ -52,18 +58,32 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+backend/logs/
+backend/*.log
 
 # Testing
 .coverage
 .pytest_cache/
 htmlcov/
 .tox/
+coverage/
+.nyc_output
 
 # ML Models (large files)
 *.pkl
 *.h5
 *.model
+*.bin
 ml_models/*/weights/
+backend/app/ml/models/
+*.pth
+*.onnx
+
+# spaCy models (downloaded)
+backend/app/ml/nlp_task_extractor/models/
+fr_core_news_lg/
+en_core_web_lg/
 
 # Frontend
 node_modules/
@@ -71,10 +91,18 @@ frontend/build/
 frontend/dist/
 frontend/.next/
 frontend/out/
+.cache/
+.parcel-cache/
+frontend/.cache/
+
+# Webpack
+.webpack/
+frontend/.webpack/
 
 # OS
 Thumbs.db
 .DS_Store
+*.swp
 
 # Windows reserved names
 nul
@@ -84,6 +112,8 @@ nul
 *.temp
 temp/
 tmp/
+*.bak
+*.backup
 
 # Jupyter Notebooks
 .ipynb_checkpoints/
@@ -91,10 +121,89 @@ tmp/
 # Documentation builds
 docs/_build/
 docs/.doctrees/
+site/
 
-# Celery
+# Celery & APScheduler
 celerybeat-schedule
 celerybeat.pid
+scheduler.db
 
 # Redis dump
 dump.rdb
+
+# Email test files (optionally keep sample_emails)
+backend/scripts/emails/
+backend/emails/
+*.eml
+
+# Alembic (migrations might want to be committed)
+# Uncomment if you want to ignore migration files
+# backend/alembic/versions/*.py
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# TypeScript
+*.tsbuildinfo
+
+# Production builds
+/build
+/dist
+
+# Local History for Visual Studio Code
+.history/
+
+# Python profiling
+*.prof
+*.lprof
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Large files (GitHub has 100MB limit)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Sensitive data
+secrets/
+credentials/
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# Application-specific
+backend/app/workers/logs/
+backend/app/workers/*.pid
+backend/nul
+nul

@@ -2,6 +2,7 @@
 from .base import Base, BaseModel
 from .employee import Employee
 from .team import Team
+from .employee_team import EmployeeTeam
 from .skill import Skill, EmployeeSkill, SkillCategory, SkillLevel
 from .task import Task, TaskStatus, TaskSource
 from .burnout_metric import BurnoutMetric
@@ -12,6 +13,7 @@ __all__ = [
     "BaseModel",
     "Employee",
     "Team",
+    "EmployeeTeam",
     "Skill",
     "EmployeeSkill",
     "SkillCategory",
