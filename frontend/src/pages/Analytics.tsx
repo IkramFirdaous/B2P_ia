@@ -1,5 +1,5 @@
 /**
- * Analytics Page - Burnout metrics and performance analytics
+ * Analytics Page - Balance score metrics and performance analytics
  */
 import { useState, useEffect } from 'react';
 import {
@@ -232,15 +232,15 @@ export default function Analytics() {
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {/* Burnout Risk Trend */}
+          {/* Balance Score Trend */}
           <Grid item xs={12} lg={8}>
             <Card>
               <CardContent>
                 <Typography variant="h6" fontWeight={700} gutterBottom>
-                  Burnout Risk Trend
+                  Balance Score Trend
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Daily burnout risk score and work patterns
+                  Daily balance score and work patterns
                 </Typography>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={burnoutMetrics.length > 0 ? burnoutMetrics.map(m => ({
@@ -262,10 +262,10 @@ export default function Analytics() {
                   <Line
                     type="monotone"
                     dataKey="risk"
-                    stroke="#F44336"
+                    stroke="#667eea"
                     strokeWidth={3}
-                    name="Risk Score"
-                    dot={{ fill: '#F44336', r: 5 }}
+                    name="Balance Score"
+                    dot={{ fill: '#667eea', r: 5 }}
                   />
                   <Line
                     type="monotone"
@@ -350,10 +350,10 @@ export default function Analytics() {
           <Card>
             <CardContent>
               <Typography variant="h6" fontWeight={700} gutterBottom>
-                Risk Factors Breakdown
+                Balance Factors Breakdown
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Contributing factors to burnout risk
+                Contributing factors to work-life balance
               </Typography>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart

@@ -1,5 +1,5 @@
 /**
- * Burnout Alert Component - Displays burnout risk warnings
+ * Balance Score Alert Component - Displays work-life balance score
  */
 import {
   Alert,
@@ -34,25 +34,25 @@ const riskConfig = {
     color: '#4CAF50',
     icon: <CheckIcon />,
     severity: 'success' as const,
-    title: 'Low Burnout Risk',
+    title: 'Excellent Balance Score',
   },
   medium: {
     color: '#FFC107',
     icon: <InfoIcon />,
     severity: 'warning' as const,
-    title: 'Medium Burnout Risk',
+    title: 'Moderate Balance Score',
   },
   high: {
     color: '#FF9800',
     icon: <WarningIcon />,
     severity: 'warning' as const,
-    title: 'High Burnout Risk',
+    title: 'Low Balance Score',
   },
   critical: {
     color: '#F44336',
     icon: <ErrorIcon />,
     severity: 'error' as const,
-    title: 'Critical Burnout Risk',
+    title: 'Critical Balance Score',
   },
 };
 
@@ -94,7 +94,7 @@ export default function BurnoutAlert({ burnoutData }: BurnoutAlertProps) {
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
           <Typography variant="body2" fontWeight={600}>
-            Current Risk Score
+            Current Balance Score
           </Typography>
           <Typography variant="body2" fontWeight={700} sx={{ color: config.color }}>
             {riskPercentage.toFixed(1)}%

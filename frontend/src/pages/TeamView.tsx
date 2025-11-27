@@ -42,7 +42,7 @@ interface TeamMember {
   activeTasks: number;
   completedThisWeek: number;
   workloadScore: number;
-  burnoutRisk: number;
+  balanceScore: number;
   productivity: number;
 }
 
@@ -55,7 +55,7 @@ const mockTeamMembers: TeamMember[] = [
     activeTasks: 8,
     completedThisWeek: 12,
     workloadScore: 45.2,
-    burnoutRisk: 0.25,
+    balanceScore: 0.25,
     productivity: 92,
   },
   {
@@ -66,7 +66,7 @@ const mockTeamMembers: TeamMember[] = [
     activeTasks: 12,
     completedThisWeek: 8,
     workloadScore: 68.5,
-    burnoutRisk: 0.65,
+    balanceScore: 0.65,
     productivity: 78,
   },
   {
@@ -77,7 +77,7 @@ const mockTeamMembers: TeamMember[] = [
     activeTasks: 6,
     completedThisWeek: 15,
     workloadScore: 32.8,
-    burnoutRisk: 0.15,
+    balanceScore: 0.15,
     productivity: 95,
   },
   {
@@ -88,7 +88,7 @@ const mockTeamMembers: TeamMember[] = [
     activeTasks: 10,
     completedThisWeek: 10,
     workloadScore: 52.3,
-    burnoutRisk: 0.45,
+    balanceScore: 0.45,
     productivity: 85,
   },
 ];
@@ -143,15 +143,15 @@ export default function TeamView() {
               return completedDate >= weekAgo;
             }).length;
 
-            // Get burnout data
-            let burnoutRisk = 0.2; // default
+            // Get balance score data
+            let balanceScore = 0.2; // default
             try {
               const burnoutRes = await axios.get(`${API_URL}/analytics/burnout/${member.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
               });
-              burnoutRisk = burnoutRes.data.current_risk_score || 0.2;
+              balanceScore = burnoutRes.data.current_risk_score || 0.2;
             } catch (err) {
-              console.warn(`No burnout data for ${member.name}`);
+              console.warn(`No balance data for ${member.name}`);
             }
 
             // Calculate workload score (sum of estimated efforts)
@@ -167,8 +167,8 @@ export default function TeamView() {
               activeTasks,
               completedThisWeek,
               workloadScore,
-              burnoutRisk,
-              productivity: Math.max(0, Math.min(100, 100 - (burnoutRisk * 50))),
+              balanceScore,
+              productivity: Math.max(0, Math.min(100, 100 - (balanceScore * 50))),
             };
           } catch (err) {
             console.error(`Error fetching data for ${member.name}:`, err);
@@ -191,8 +191,8 @@ export default function TeamView() {
   const avgWorkload = teamMembers.length > 0
     ? teamMembers.reduce((sum, m) => sum + m.workloadScore, 0) / teamMembers.length
     : 0;
-  const avgBurnout = teamMembers.length > 0
-    ? teamMembers.reduce((sum, m) => sum + m.burnoutRisk, 0) / teamMembers.length
+  const avgBalance = teamMembers.length > 0
+    ? teamMembers.reduce((sum, m) => sum + m.balanceScore, 0) / teamMembers.length
     : 0;
   const totalActive = teamMembers.reduce((sum, m) => sum + m.activeTasks, 0);
   const totalCompleted = teamMembers.reduce((sum, m) => sum + m.completedThisWeek, 0);
@@ -314,10 +314,10 @@ export default function TeamView() {
           <Card sx={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', color: 'white' }}>
             <CardContent>
               <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                Avg Burnout Risk
+                Avg Balance Score
               </Typography>
               <Typography variant="h3" fontWeight={700}>
-                {(avgBurnout * 100).toFixed(0)}%
+                {(avgBalance * 100).toFixed(0)}%
               </Typography>
               <Typography variant="caption" sx={{ opacity: 0.8 }}>
                 team health
@@ -366,13 +366,13 @@ export default function TeamView() {
                 <Box sx={{ mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography variant="body2" color="text.secondary">
-                      Burnout Risk
+                      Balance Score
                     </Typography>
                     <Chip
-                      label={getRiskLabel(member.burnoutRisk)}
+                      label={getRiskLabel(member.balanceScore)}
                       size="small"
                       sx={{
-                        backgroundColor: getRiskColor(member.burnoutRisk),
+                        backgroundColor: getRiskColor(member.balanceScore),
                         color: 'white',
                         fontWeight: 600,
                         fontSize: '0.7rem',
@@ -381,13 +381,13 @@ export default function TeamView() {
                   </Box>
                   <LinearProgress
                     variant="determinate"
-                    value={member.burnoutRisk * 100}
+                    value={member.balanceScore * 100}
                     sx={{
                       height: 8,
                       borderRadius: 4,
                       backgroundColor: '#E0E0E0',
                       '& .MuiLinearProgress-bar': {
-                        backgroundColor: getRiskColor(member.burnoutRisk),
+                        backgroundColor: getRiskColor(member.balanceScore),
                         borderRadius: 4,
                       },
                     }}
@@ -443,7 +443,7 @@ export default function TeamView() {
                   <TableCell><strong>Member</strong></TableCell>
                   <TableCell align="center"><strong>Active Tasks</strong></TableCell>
                   <TableCell align="center"><strong>Workload Score</strong></TableCell>
-                  <TableCell align="center"><strong>Burnout Risk</strong></TableCell>
+                  <TableCell align="center"><strong>Balance Score</strong></TableCell>
                   <TableCell align="center"><strong>Productivity</strong></TableCell>
                   <TableCell align="center"><strong>Status</strong></TableCell>
                 </TableRow>
@@ -489,10 +489,10 @@ export default function TeamView() {
                     </TableCell>
                     <TableCell align="center">
                       <Chip
-                        label={`${(member.burnoutRisk * 100).toFixed(0)}%`}
+                        label={`${(member.balanceScore * 100).toFixed(0)}%`}
                         size="small"
                         sx={{
-                          backgroundColor: getRiskColor(member.burnoutRisk),
+                          backgroundColor: getRiskColor(member.balanceScore),
                           color: 'white',
                           fontWeight: 600,
                         }}
@@ -506,7 +506,7 @@ export default function TeamView() {
                       </Box>
                     </TableCell>
                     <TableCell align="center">
-                      {member.burnoutRisk >= 0.6 ? (
+                      {member.balanceScore >= 0.6 ? (
                         <Chip icon={<WarningIcon />} label="At Risk" size="small" color="error" />
                       ) : (
                         <Chip icon={<CheckIcon />} label="Healthy" size="small" color="success" />
