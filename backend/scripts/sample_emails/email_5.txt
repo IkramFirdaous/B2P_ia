@@ -1,0 +1,18 @@
+Subject: Mise à jour documentation API
+Urgency: 2/5
+Source: email
+
+==================================================
+
+Bonjour,
+
+Il faudrait mettre à jour la documentation de l'API suite aux derniers changements.
+
+Les endpoints modifiés sont:
+- POST /api/users
+- GET /api/tasks
+- PUT /api/employees/{id}
+
+Merci de documenter les nouveaux paramètres et les exemples de réponses.
+
+Tech Lead

@@ -1,0 +1,19 @@
+Subject: Formation React avancé
+Urgency: 2/5
+Source: email
+
+==================================================
+
+Bonjour,
+
+Une formation React avancé aura lieu le mois prochain.
+Merci de vous inscrire avant le 15 du mois si vous êtes intéressés.
+
+Thèmes abordés:
+- Hooks avancés
+- Performance optimization
+- Server-side rendering
+
+Places limitées à 10 personnes.
+
+RH
