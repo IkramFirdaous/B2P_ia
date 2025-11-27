@@ -1,0 +1,14 @@
+Subject: Code review - Feature authentification
+Urgency: 3/5
+Source: email
+
+==================================================
+
+Salut,
+
+J'ai terminé l'implémentation de la nouvelle feature d'authentification OAuth.
+Pourrais-tu faire une code review avant la fin de la semaine?
+
+Le code est sur la branche feature/oauth-integration.
+
+Merci!

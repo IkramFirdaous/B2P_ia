@@ -1,0 +1,227 @@
+[
+  {
+    "text": "Développer l'API REST pour le module de facturation avant vendredi",
+    "entities": [
+      {"start": 0, "end": 10, "label": "TASK_ACTION"},
+      {"start": 48, "end": 62, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Jean doit préparer la présentation pour la réunion client urgent",
+    "entities": [
+      {"start": 0, "end": 4, "label": "ASSIGNEE"},
+      {"start": 10, "end": 18, "label": "TASK_ACTION"},
+      {"start": 59, "end": 65, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Tester les nouvelles fonctionnalités du projet Alpha",
+    "entities": [
+      {"start": 0, "end": 6, "label": "TASK_ACTION"},
+      {"start": 44, "end": 53, "label": "PROJECT"}
+    ]
+  },
+  {
+    "text": "Envoyer le rapport mensuel à Marie avant la fin du mois",
+    "entities": [
+      {"start": 0, "end": 7, "label": "TASK_ACTION"},
+      {"start": 29, "end": 34, "label": "ASSIGNEE"},
+      {"start": 35, "end": 56, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Organiser une réunion de planification sprint cette semaine",
+    "entities": [
+      {"start": 0, "end": 9, "label": "TASK_ACTION"},
+      {"start": 47, "end": 60, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Implémenter l'authentification JWT pour l'application mobile prioritaire",
+    "entities": [
+      {"start": 0, "end": 11, "label": "TASK_ACTION"},
+      {"start": 62, "end": 73, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Sophie doit créer les maquettes UI pour le projet Phoenix aujourd'hui",
+    "entities": [
+      {"start": 0, "end": 6, "label": "ASSIGNEE"},
+      {"start": 12, "end": 17, "label": "TASK_ACTION"},
+      {"start": 44, "end": 58, "label": "PROJECT"},
+      {"start": 59, "end": 70, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Analyser les performances de la base de données avant demain urgent",
+    "entities": [
+      {"start": 0, "end": 8, "label": "TASK_ACTION"},
+      {"start": 49, "end": 62, "label": "DEADLINE"},
+      {"start": 63, "end": 69, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Rédiger la documentation technique du système de cache",
+    "entities": [
+      {"start": 0, "end": 7, "label": "TASK_ACTION"}
+    ]
+  },
+  {
+    "text": "Marc doit valider le pull request #234 cette semaine",
+    "entities": [
+      {"start": 0, "end": 4, "label": "ASSIGNEE"},
+      {"start": 10, "end": 17, "label": "TASK_ACTION"},
+      {"start": 40, "end": 53, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Planifier la migration vers Kubernetes pour le projet Atlas asap",
+    "entities": [
+      {"start": 0, "end": 9, "label": "TASK_ACTION"},
+      {"start": 48, "end": 60, "label": "PROJECT"},
+      {"start": 61, "end": 65, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Contacter le client pour confirmer les spécifications cette semaine",
+    "entities": [
+      {"start": 0, "end": 9, "label": "TASK_ACTION"},
+      {"start": 51, "end": 68, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Julie doit finaliser le rapport d'analyse avant le 25/12",
+    "entities": [
+      {"start": 0, "end": 5, "label": "ASSIGNEE"},
+      {"start": 11, "end": 20, "label": "TASK_ACTION"},
+      {"start": 44, "end": 57, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Vérifier les logs d'erreur du serveur de production critique",
+    "entities": [
+      {"start": 0, "end": 8, "label": "TASK_ACTION"},
+      {"start": 53, "end": 61, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Créer les tests unitaires pour le module de paiement important",
+    "entities": [
+      {"start": 0, "end": 5, "label": "TASK_ACTION"},
+      {"start": 54, "end": 63, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Pierre doit déployer la version 2.0 sur l'environnement de staging demain",
+    "entities": [
+      {"start": 0, "end": 6, "label": "ASSIGNEE"},
+      {"start": 12, "end": 20, "label": "TASK_ACTION"},
+      {"start": 68, "end": 74, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Configurer les pipelines CI/CD pour le projet Sigma",
+    "entities": [
+      {"start": 0, "end": 10, "label": "TASK_ACTION"},
+      {"start": 40, "end": 52, "label": "PROJECT"}
+    ]
+  },
+  {
+    "text": "Optimiser les requêtes SQL lentes identifiées dans le monitoring",
+    "entities": [
+      {"start": 0, "end": 9, "label": "TASK_ACTION"}
+    ]
+  },
+  {
+    "text": "Anne doit présenter les résultats du sprint la semaine prochaine",
+    "entities": [
+      {"start": 0, "end": 4, "label": "ASSIGNEE"},
+      {"start": 10, "end": 19, "label": "TASK_ACTION"},
+      {"start": 44, "end": 65, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Résoudre le bug critique #789 sur le projet Omega urgent",
+    "entities": [
+      {"start": 0, "end": 8, "label": "TASK_ACTION"},
+      {"start": 38, "end": 50, "label": "PROJECT"},
+      {"start": 51, "end": 57, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Review the code changes for the authentication module by end of week",
+    "entities": [
+      {"start": 0, "end": 6, "label": "TASK_ACTION"},
+      {"start": 57, "end": 69, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Sarah needs to implement the payment gateway integration asap",
+    "entities": [
+      {"start": 0, "end": 5, "label": "ASSIGNEE"},
+      {"start": 15, "end": 24, "label": "TASK_ACTION"},
+      {"start": 57, "end": 61, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Prepare the release notes for version 3.0 before next Monday",
+    "entities": [
+      {"start": 0, "end": 7, "label": "TASK_ACTION"},
+      {"start": 43, "end": 61, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Update the dependencies for the Phoenix project this week",
+    "entities": [
+      {"start": 0, "end": 6, "label": "TASK_ACTION"},
+      {"start": 32, "end": 47, "label": "PROJECT"},
+      {"start": 48, "end": 57, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "John should design the database schema for the new feature urgent",
+    "entities": [
+      {"start": 0, "end": 4, "label": "ASSIGNEE"},
+      {"start": 12, "end": 18, "label": "TASK_ACTION"},
+      {"start": 59, "end": 65, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Valider les spécifications techniques avec l'équipe demain matin",
+    "entities": [
+      {"start": 0, "end": 7, "label": "TASK_ACTION"},
+      {"start": 52, "end": 65, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Mettre en place l'infrastructure cloud pour le projet Beta prioritaire",
+    "entities": [
+      {"start": 0, "end": 15, "label": "TASK_ACTION"},
+      {"start": 47, "end": 58, "label": "PROJECT"},
+      {"start": 59, "end": 70, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Thomas doit compléter la formation sécurité avant fin septembre",
+    "entities": [
+      {"start": 0, "end": 6, "label": "ASSIGNEE"},
+      {"start": 12, "end": 21, "label": "TASK_ACTION"},
+      {"start": 45, "end": 64, "label": "DEADLINE"}
+    ]
+  },
+  {
+    "text": "Corriger les vulnérabilités identifiées par le scan de sécurité critique",
+    "entities": [
+      {"start": 0, "end": 8, "label": "TASK_ACTION"},
+      {"start": 65, "end": 73, "label": "PRIORITY"}
+    ]
+  },
+  {
+    "text": "Emma doit intégrer l'API de notification push dans l'application mobile aujourd'hui",
+    "entities": [
+      {"start": 0, "end": 4, "label": "ASSIGNEE"},
+      {"start": 10, "end": 18, "label": "TASK_ACTION"},
+      {"start": 74, "end": 84, "label": "DEADLINE"}
+    ]
+  }
+]
