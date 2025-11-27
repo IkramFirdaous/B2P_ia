@@ -9,6 +9,8 @@ from .burnout_metric import BurnoutMetric
 from .achievement import Achievement, AchievementType
 from .user_session import UserSession
 from .email_credential import EmailCredential
+from .extracted_email import ExtractedEmail, ExtractionStatus
+from .extracted_task import ExtractedTask
 
 __all__ = [
     "Base",
@@ -28,4 +30,7 @@ __all__ = [
     "AchievementType",
     "UserSession",
     "EmailCredential",
+    "ExtractedEmail",
+    "ExtractionStatus",
+    "ExtractedTask",
 ]

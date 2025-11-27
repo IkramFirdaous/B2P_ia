@@ -1,11 +1,14 @@
 """Gmail OAuth Service for Authentication and Email Access"""
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
+from datetime import datetime
+import base64
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.models import EmailCredential
 
 
 class GmailService:
@@ -173,3 +176,111 @@ class GmailService:
         credentials.refresh(Request())
 
         return credentials
+
+    def fetch_emails(self, employee_id: str, max_emails: int = 20, unread_only: bool = False) -> List[Dict]:
+        """
+        Fetch emails from Gmail for extraction
+
+        Args:
+            employee_id: Employee ID to fetch emails for
+            max_emails: Maximum number of emails to fetch
+            unread_only: Whether to fetch only unread emails
+
+        Returns:
+            List of email dictionaries with: id, subject, sender, received_at, content
+        """
+        # Get employee's email credentials
+        email_cred = self.db.query(EmailCredential).filter(
+            EmailCredential.employee_id == employee_id
+        ).first()
+
+        if not email_cred:
+            raise ValueError(f"No email credentials found for employee {employee_id}")
+
+        # Build credentials
+        credentials = Credentials(
+            token=email_cred.access_token,
+            refresh_token=email_cred.refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=self.CLIENT_ID,
+            client_secret=self.CLIENT_SECRET
+        )
+
+        # Build Gmail service
+        service = build('gmail', 'v1', credentials=credentials)
+
+        # Build query
+        query = 'is:unread' if unread_only else ''
+
+        # Fetch message IDs
+        results = service.users().messages().list(
+            userId='me',
+            q=query,
+            maxResults=max_emails
+        ).execute()
+
+        messages = results.get('messages', [])
+        emails = []
+
+        for msg in messages:
+            # Fetch full message
+            message = service.users().messages().get(
+                userId='me',
+                id=msg['id'],
+                format='full'
+            ).execute()
+
+            # Extract headers
+            headers = message['payload'].get('headers', [])
+            subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
+            sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown')
+            date_str = next((h['value'] for h in headers if h['name'] == 'Date'), '')
+
+            # Parse date
+            from email.utils import parsedate_to_datetime
+            received_at = parsedate_to_datetime(date_str) if date_str else datetime.utcnow()
+
+            # Extract body
+            content = self._extract_email_body(message['payload'])
+
+            # Filter spam/promotional emails
+            if self._is_automated_sender(sender, subject, content):
+                continue
+
+            emails.append({
+                'email_id': msg['id'],
+                'subject': subject,
+                'sender': sender,
+                'received_at': received_at,
+                'content': content[:10000]  # Truncate to 10k chars
+            })
+
+        return emails
+
+    def _extract_email_body(self, payload: Dict) -> str:
+        """Extract email body from Gmail API payload"""
+        if 'parts' in payload:
+            parts = payload['parts']
+            for part in parts:
+                if part['mimeType'] == 'text/plain':
+                    data = part['body'].get('data', '')
+                    if data:
+                        return base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
+        elif 'body' in payload:
+            data = payload['body'].get('data', '')
+            if data:
+                return base64.urlsafe_b64decode(data).decode('utf-8', errors='ignore')
+        return ""
+
+    def _is_automated_sender(self, sender: str, subject: str, content: str) -> bool:
+        """Filter out promotional/automated emails"""
+        automated_keywords = [
+            'noreply', 'no-reply', 'donotreply', 'newsletter',
+            'unsubscribe', 'marketing', 'promotion', 'advertisement'
+        ]
+        lower_sender = sender.lower()
+        lower_subject = subject.lower()
+        lower_content = content.lower()[:500]  # Check first 500 chars
+
+        return any(keyword in lower_sender or keyword in lower_subject or keyword in lower_content
+                   for keyword in automated_keywords)

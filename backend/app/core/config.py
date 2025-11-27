@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     GMAIL_CLIENT_ID: str = ""
     GMAIL_CLIENT_SECRET: str = ""
 
+    # Gemini AI (for Email Extraction)
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"  # Fast and cost-effective
+
     @property
     def BACKEND_CORS_ORIGINS(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""
