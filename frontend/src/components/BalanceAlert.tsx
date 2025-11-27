@@ -62,7 +62,7 @@ const trendIcons = {
 };
 
 export default function BalanceAlert({ balanceData }: BalanceAlertProps) {
-  const config = balanceLevelConfig[balanceData.balance_level];
+  const config = balanceLevelConfig[balanceData.balance_level as keyof typeof balanceLevelConfig];
   const balancePercentage = balanceData.current_balance_score * 100;
 
   return (
@@ -81,7 +81,7 @@ export default function BalanceAlert({ balanceData }: BalanceAlertProps) {
           </AlertTitle>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Chip
-              icon={trendIcons[balanceData.trend]}
+              icon={trendIcons[balanceData.trend as keyof typeof trendIcons]}
               label={balanceData.trend.toUpperCase()}
               size="small"
               sx={{ fontWeight: 600 }}
@@ -120,19 +120,22 @@ export default function BalanceAlert({ balanceData }: BalanceAlertProps) {
             Contributing Factors
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {Object.entries(balanceData.factors).map(([factor, value]) => (
-              <Chip
-                key={factor}
-                label={`${factor.replace(/_/g, ' ')}: ${(value * 100).toFixed(0)}%`}
-                size="small"
-                sx={{
-                  backgroundColor: value > 0.7 ? '#E8F5E9' : value > 0.4 ? '#FFF9C4' : '#FFEBEE',
-                  color: value > 0.7 ? '#2E7D32' : value > 0.4 ? '#F57F17' : '#C62828',
-                  fontWeight: 600,
-                  textTransform: 'capitalize',
-                }}
-              />
-            ))}
+            {Object.entries(balanceData.factors).map(([factor, value]) => {
+              const numValue = value as number;
+              return (
+                <Chip
+                  key={factor}
+                  label={`${factor.replace(/_/g, ' ')}: ${(numValue * 100).toFixed(0)}%`}
+                  size="small"
+                  sx={{
+                    backgroundColor: numValue > 0.7 ? '#E8F5E9' : numValue > 0.4 ? '#FFF9C4' : '#FFEBEE',
+                    color: numValue > 0.7 ? '#2E7D32' : numValue > 0.4 ? '#F57F17' : '#C62828',
+                    fontWeight: 600,
+                    textTransform: 'capitalize',
+                  }}
+                />
+              );
+            })}
           </Box>
         </Box>
       )}
@@ -143,7 +146,7 @@ export default function BalanceAlert({ balanceData }: BalanceAlertProps) {
             Recommendations
           </Typography>
           <List dense>
-            {balanceData.recommendations.map((rec, index) => (
+            {balanceData.recommendations.map((rec: string, index: number) => (
               <ListItem key={index} sx={{ pl: 0 }}>
                 <ListItemIcon sx={{ minWidth: 36 }}>
                   <CheckIcon sx={{ color: config.color, fontSize: 20 }} />

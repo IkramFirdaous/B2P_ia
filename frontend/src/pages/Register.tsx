@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -12,11 +12,11 @@ import {
   Container,
   MenuItem
 } from '@mui/material';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 
 const Register: React.FC = () => {
-  const navigate = useNavigate();
-  const { register } = useAuth();
+  // const navigate = useNavigate();
+  // const { register } = useAuth();  // TODO: Add register function to AuthContext if needed
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,8 +61,10 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      await register(formData.name, formData.email, formData.password, formData.role);
-      navigate('/');
+      // TODO: Implement classic registration or use OAuth only
+      setError('Classic registration is disabled. Please use "Sign in with Gmail" instead.');
+      // await register(formData.name, formData.email, formData.password, formData.role);
+      // navigate('/');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {

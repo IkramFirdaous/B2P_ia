@@ -46,6 +46,7 @@ const menuItems = [
   { text: 'AI Assistant', icon: <AIAssistantIcon />, path: '/ai-assistant' },
   { text: 'Email Extraction', icon: <TaskIcon />, path: '/email-extraction' },
   { text: 'Tasks', icon: <TaskIcon />, path: '/tasks' },
+  { text: 'Employees', icon: <PeopleIcon />, path: '/employees' },
   { text: 'Team', icon: <PeopleIcon />, path: '/team' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
 ];

@@ -27,6 +27,18 @@ export interface BurnoutRiskResponse {
   trend: "improving" | "stable" | "declining";
 }
 
+// Alias for work-life balance risk (same structure as burnout risk)
+export interface BalanceRiskResponse {
+  employee_id: string;
+  current_balance_score: number; // 0-1
+  balance_level: "low" | "medium" | "high" | "excellent";
+  factors: {
+    [key: string]: number; // Factor name to contribution score
+  };
+  recommendations: string[];
+  trend: "improving" | "stable" | "declining";
+}
+
 export interface TeamEquityResponse {
   team_id: string;
   team_name: string;

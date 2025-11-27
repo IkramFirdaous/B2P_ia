@@ -14,6 +14,7 @@ import TeamView from './pages/TeamView';
 import Analytics from './pages/Analytics';
 import AIAssistant from './pages/AIAssistant';
 import EmailExtraction from './pages/EmailExtraction';
+import Employees from './pages/Employees';
 
 const theme = createTheme({
   palette: {
@@ -199,6 +200,7 @@ function App() {
                       <Route path="/email-extraction" element={<EmailExtraction />} />
                       <Route path="/tasks" element={<TaskManagement />} />
                       <Route path="/team" element={<TeamView />} />
+                      <Route path="/employees" element={<Employees />} />
                       <Route path="/analytics" element={<Analytics />} />
                     </Routes>
                   </Layout>
