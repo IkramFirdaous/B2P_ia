@@ -51,13 +51,25 @@ class GeminiExtractionService:
             response = self.model.generate_content(prompt)
             result_text = response.text
 
+            # Strip markdown code blocks if present
+            if result_text.strip().startswith('```'):
+                # Remove ```json or ``` from start and ``` from end
+                lines = result_text.strip().split('\n')
+                if lines[0].startswith('```'):
+                    lines = lines[1:]  # Remove first line (```json or ```)
+                if lines[-1].strip() == '```':
+                    lines = lines[:-1]  # Remove last line (```)
+                result_text = '\n'.join(lines)
+
             # Parse JSON response
             result = json.loads(result_text)
 
             return result
 
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
             # Fallback if JSON parsing fails
+            print(f"[WARNING] JSON parsing failed: {e}")
+            print(f"[WARNING] Raw text: {result_text[:500]}")
             return {
                 'tasks': [],
                 'sentiment_score': 0.0,

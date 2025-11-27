@@ -14,6 +14,12 @@ from .analytics_schema import (
     ActivityTrackingRequest, AchievementBase, AchievementCreate,
     AchievementResponse, RecognitionRequest
 )
+from .email_extraction_schema import (
+    EmailFetchRequest, TaskApprovalRequest, ExtractedEmailResponse,
+    ExtractedTaskResponse, EmailProcessingResponse, ExtractionStatsResponse,
+    TaskApprovalResponse, PaginatedTasksResponse, PaginatedEmailsResponse,
+    TaskDatasetExport
+)
 
 __all__ = [
     # Task schemas
@@ -28,4 +34,9 @@ __all__ = [
     "BurnoutRiskResponse", "TeamEquityResponse", "EmployeeWorkloadDetail",
     "ActivityTrackingRequest", "AchievementBase", "AchievementCreate",
     "AchievementResponse", "RecognitionRequest",
+    # Email extraction schemas
+    "EmailFetchRequest", "TaskApprovalRequest", "ExtractedEmailResponse",
+    "ExtractedTaskResponse", "EmailProcessingResponse", "ExtractionStatsResponse",
+    "TaskApprovalResponse", "PaginatedTasksResponse", "PaginatedEmailsResponse",
+    "TaskDatasetExport",
 ]

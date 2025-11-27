@@ -116,7 +116,12 @@ async def get_current_user(
         session.last_activity = datetime.utcnow()
         db.commit()
 
-        return session
+        # Return the Employee, not the session
+        employee = db.query(Employee).filter(Employee.id == session.employee_id).first()
+        if not employee:
+            raise credentials_exception
+
+        return employee
     else:
         # Password-based authentication (Employee)
         user_id: str = payload.get("sub")

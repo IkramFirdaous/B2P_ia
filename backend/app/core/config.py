@@ -54,7 +54,26 @@ class Settings(BaseSettings):
 
     # Gemini AI (for Email Extraction)
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-1.5-flash"  # Fast and cost-effective
+    GEMINI_MODEL: str = "gemini-1.5-flash-latest"  # Fast and cost-effective
+
+    @field_validator('API_V1_PREFIX')
+    @classmethod
+    def fix_api_prefix_path_conversion(cls, v: str) -> str:
+        """
+        Fix Git Bash MSYS path conversion issue on Windows
+        Converts 'C:/Program Files/Git/api/v1' back to '/api/v1'
+        """
+        if v and ':' in v and ('Program Files' in v or 'Git' in v):
+            # This is a converted path, extract the actual API prefix
+            parts = v.split('/')
+            if parts:
+                # Find 'api' in the path and reconstruct from there
+                try:
+                    api_index = parts.index('api')
+                    return '/' + '/'.join(parts[api_index:])
+                except ValueError:
+                    pass
+        return v if v.startswith('/') else '/api/v1'
 
     @property
     def BACKEND_CORS_ORIGINS(self) -> List[str]:

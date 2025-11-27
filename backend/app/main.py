@@ -80,7 +80,7 @@ async def health_check():
 
 
 # Import and include API routers
-from app.api.v1 import tasks, employees, analytics, agent, email, teams, auth, wellbeing
+from app.api.v1 import tasks, employees, analytics, agent, email, teams, auth, wellbeing, email_extraction
 
 # Authentication router (no auth required for these endpoints)
 app.include_router(auth.router, prefix=settings.API_V1_PREFIX, tags=["authentication"])
@@ -93,6 +93,7 @@ app.include_router(analytics.router, prefix=settings.API_V1_PREFIX, tags=["analy
 app.include_router(wellbeing.router, prefix=settings.API_V1_PREFIX, tags=["wellbeing"])
 app.include_router(agent.router, prefix=settings.API_V1_PREFIX, tags=["multi-agent"])
 app.include_router(email.router, prefix=settings.API_V1_PREFIX, tags=["email-integration"])
+app.include_router(email_extraction.router, prefix=settings.API_V1_PREFIX, tags=["email-extraction"])
 
 if __name__ == "__main__":
     import uvicorn

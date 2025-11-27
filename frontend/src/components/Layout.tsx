@@ -29,6 +29,7 @@ import {
   Analytics as AnalyticsIcon,
   Psychology as AIIcon,
   AutoAwesome as AIAssistantIcon,
+  Email as EmailIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
@@ -45,6 +46,7 @@ const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
   { text: 'AI Assistant', icon: <AIAssistantIcon />, path: '/ai-assistant' },
   { text: 'Tasks', icon: <TaskIcon />, path: '/tasks' },
+  { text: 'Email Extraction', icon: <EmailIcon />, path: '/email-extraction' },
   { text: 'Employees', icon: <PeopleIcon />, path: '/employees' },
   { text: 'Team', icon: <PeopleIcon />, path: '/team' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },

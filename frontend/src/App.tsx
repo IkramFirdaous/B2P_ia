@@ -12,6 +12,7 @@ import TeamView from './pages/TeamView';
 import Analytics from './pages/Analytics';
 import AIAssistant from './pages/AIAssistant';
 import Employees from './pages/Employees';
+import EmailExtraction from './pages/EmailExtraction';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AuthCallback from './pages/AuthCallback';
@@ -246,6 +247,16 @@ function App() {
                 <PrivateRoute>
                   <Layout>
                     <Employees />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/email-extraction"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <EmailExtraction />
                   </Layout>
                 </PrivateRoute>
               }
