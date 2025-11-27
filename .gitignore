@@ -20,6 +20,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+.claude/
 
 # Virtual Environment
 venv/
@@ -102,6 +103,9 @@ frontend/.webpack/
 Thumbs.db
 .DS_Store
 *.swp
+
+# Windows reserved names
+nul
 
 # Temporary files
 *.tmp
