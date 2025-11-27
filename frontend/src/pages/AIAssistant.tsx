@@ -55,6 +55,8 @@ const AIAssistant: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [employeeId, setEmployeeId] = useState<number>(1); // Demo default
   const [teamId, setTeamId] = useState<number>(1); // Demo default
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore - examples state reserved for future use
   const [examples, setExamples] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

@@ -1,14 +1,19 @@
 /**
- * Main App Component
+ * Main App Component with Authentication
  */
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { AuthProvider } from './contexts/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import TaskManagement from './pages/TaskManagement';
 import TeamView from './pages/TeamView';
 import Analytics from './pages/Analytics';
 import AIAssistant from './pages/AIAssistant';
+import Employees from './pages/Employees';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 const theme = createTheme({
   palette: {
@@ -176,15 +181,75 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
-        <Layout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/ai-assistant" element={<AIAssistant />} />
-            <Route path="/tasks" element={<TaskManagement />} />
-            <Route path="/team" element={<TeamView />} />
-            <Route path="/analytics" element={<Analytics />} />
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            {/* Protected routes */}
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/ai-assistant"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <AIAssistant />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/tasks"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <TaskManagement />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/team"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <TeamView />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Analytics />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/employees"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Employees />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
           </Routes>
-        </Layout>
+        </AuthProvider>
       </Router>
     </ThemeProvider>
   );

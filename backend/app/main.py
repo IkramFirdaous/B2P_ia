@@ -33,6 +33,15 @@ async def startup_event():
     # Initialize database
     init_db()
 
+    # Start email worker if configured
+    if settings.SMTP_USER and settings.SMTP_PASSWORD:
+        from app.workers.email_worker import start_email_worker
+        try:
+            start_email_worker(check_interval_minutes=5)
+            print("Email worker started successfully")
+        except Exception as e:
+            print(f"Failed to start email worker: {e}")
+
     print("Application startup complete")
 
 
@@ -40,6 +49,14 @@ async def startup_event():
 async def shutdown_event():
     """Cleanup on shutdown"""
     print("Application shutting down...")
+
+    # Stop email worker
+    from app.workers.email_worker import stop_email_worker
+    try:
+        stop_email_worker()
+        print("Email worker stopped")
+    except:
+        pass
 
 
 @app.get("/")
@@ -63,12 +80,19 @@ async def health_check():
 
 
 # Import and include API routers
-from app.api.v1 import tasks, employees, analytics, agent
+from app.api.v1 import tasks, employees, analytics, agent, email, teams, auth, wellbeing
 
+# Authentication router (no auth required for these endpoints)
+app.include_router(auth.router, prefix=settings.API_V1_PREFIX, tags=["authentication"])
+
+# Other routers
 app.include_router(tasks.router, prefix=settings.API_V1_PREFIX, tags=["tasks"])
 app.include_router(employees.router, prefix=settings.API_V1_PREFIX, tags=["employees"])
+app.include_router(teams.router, prefix=settings.API_V1_PREFIX, tags=["teams"])
 app.include_router(analytics.router, prefix=settings.API_V1_PREFIX, tags=["analytics"])
+app.include_router(wellbeing.router, prefix=settings.API_V1_PREFIX, tags=["wellbeing"])
 app.include_router(agent.router, prefix=settings.API_V1_PREFIX, tags=["multi-agent"])
+app.include_router(email.router, prefix=settings.API_V1_PREFIX, tags=["email-integration"])
 
 if __name__ == "__main__":
     import uvicorn

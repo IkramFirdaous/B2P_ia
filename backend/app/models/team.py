@@ -12,8 +12,17 @@ class Team(BaseModel):
     description = Column(Text, nullable=True)
     manager_id = Column(String(255), nullable=True)  # Could be FK to Employee if managers are in system
 
-    # Relationships
-    members = relationship("Employee", back_populates="team")
+    # Relationships - Many-to-many with Employees
+    team_employees = relationship("EmployeeTeam", back_populates="team", cascade="all, delete-orphan")
+    members = relationship(
+        "Employee",
+        secondary="employee_teams",
+        back_populates="teams",
+        viewonly=True  # Use team_employees for modifications
+    )
+
+    # One-to-many with Tasks
+    tasks = relationship("Task", back_populates="team")
 
     def __repr__(self):
         return f"<Team(id={self.id}, name={self.name})>"

@@ -1,7 +1,7 @@
 """Application Configuration"""
 from typing import List
-from pydantic_settings import BaseSettings
-from pydantic import AnyHttpUrl
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -24,14 +24,19 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
-    # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    # CORS - String avec URLs séparées par des virgules
+    _BACKEND_CORS_ORIGINS: str = ""
 
     # Email (optional)
     SMTP_HOST: str = "smtp.gmail.com"
-    SMTP_PORT: int = 587
+    SMTP_PORT: int = 993
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
+
+    # Email Worker
+    EMAIL_CHECK_INTERVAL: int = 5  # Minutes
+    DEFAULT_TEAM_ID: str = ""
+    DEFAULT_CREATED_BY: str = ""
 
     # ML Models
     NLP_MODEL_PATH: str = "ml_models/nlp_task_extractor"
@@ -41,15 +46,18 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    @property
+    def BACKEND_CORS_ORIGINS(self) -> List[str]:
+        """Parse CORS origins from comma-separated string"""
+        if not self._BACKEND_CORS_ORIGINS:
+            return []
+        return [i.strip() for i in self._BACKEND_CORS_ORIGINS.split(",") if i.strip()]
 
-        @classmethod
-        def parse_env_var(cls, field_name: str, raw_val: str):
-            if field_name == "BACKEND_CORS_ORIGINS":
-                return [i.strip() for i in raw_val.split(",")]
-            return raw_val
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra='ignore'  # Ignore les champs extra du .env
+    )
 
 
 # Global settings instance

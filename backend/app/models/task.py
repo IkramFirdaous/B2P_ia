@@ -1,9 +1,8 @@
 """Task database model"""
 from sqlalchemy import Column, String, Text, Integer, Float, DateTime, ForeignKey, Enum, JSON, ARRAY
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import enum
-from .base import BaseModel
+from .base import BaseModel, UUID
 
 
 class TaskStatus(str, enum.Enum):
@@ -21,6 +20,7 @@ class TaskSource(str, enum.Enum):
     MEETING = "meeting"
     MANUAL = "manual"
     CALENDAR = "calendar"
+    ASSIGNED = "assigned"  # Task assigned by manager/team lead
 
 
 class Task(BaseModel):
@@ -31,11 +31,13 @@ class Task(BaseModel):
     description = Column(Text, nullable=True)
 
     # Assignment
-    assigned_to = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=True)
-    created_by = Column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False)
+    assigned_to = Column(UUID(), ForeignKey("employees.id"), nullable=True)
+    created_by = Column(UUID(), ForeignKey("employees.id"), nullable=False)
+    team_id = Column(UUID(), ForeignKey("teams.id"), nullable=True)
 
-    # Priority and urgency
+    # Priority, urgency, and difficulty
     urgency = Column(Integer, nullable=False, default=3)  # 1-5 scale (manager input)
+    difficulty = Column(Integer, nullable=False, default=3)  # 1-5 scale (task complexity)
     deadline = Column(DateTime, nullable=True)
     estimated_effort = Column(Float, nullable=True)  # Hours
 
@@ -59,6 +61,7 @@ class Task(BaseModel):
     # Relationships
     assigned_employee = relationship("Employee", back_populates="tasks", foreign_keys=[assigned_to])
     creator = relationship("Employee", back_populates="created_tasks", foreign_keys=[created_by])
+    team = relationship("Team", back_populates="tasks")
 
     def __repr__(self):
         return f"<Task(id={self.id}, title={self.title}, status={self.status}, priority={self.priority_score})>"

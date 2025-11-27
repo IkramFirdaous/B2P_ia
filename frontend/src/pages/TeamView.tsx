@@ -1,7 +1,7 @@
 /**
  * Team View Page - Manager view of team workload and equity
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,13 +19,20 @@ import {
   TableHead,
   TableRow,
   Paper,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   TrendingUp as UpIcon,
   TrendingDown as DownIcon,
   Warning as WarningIcon,
   CheckCircle as CheckIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
 
 interface TeamMember {
   id: string;
@@ -87,10 +94,106 @@ const mockTeamMembers: TeamMember[] = [
 ];
 
 export default function TeamView() {
-  const [teamMembers] = useState<TeamMember[]>(mockTeamMembers);
+  const { user, token } = useAuth();
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const avgWorkload = teamMembers.reduce((sum, m) => sum + m.workloadScore, 0) / teamMembers.length;
-  const avgBurnout = teamMembers.reduce((sum, m) => sum + m.burnoutRisk, 0) / teamMembers.length;
+  useEffect(() => {
+    fetchTeamData();
+  }, []);
+
+  const fetchTeamData = async () => {
+    if (!token || !user?.team_id) {
+      setError('Vous devez faire partie d\'une équipe pour voir cette page');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch team members
+      const response = await axios.get(`${API_URL}/teams/${user.team_id}/members`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const members = response.data;
+
+      // Fetch tasks and burnout data for each member
+      const membersWithData = await Promise.all(
+        members.map(async (member: any) => {
+          try {
+            // Get tasks
+            const tasksRes = await axios.get(`${API_URL}/tasks`, {
+              headers: { Authorization: `Bearer ${token}` },
+              params: { assigned_to: member.id }
+            });
+
+            const tasks = tasksRes.data;
+            const activeTasks = tasks.filter((t: any) =>
+              t.status === 'pending' || t.status === 'in_progress'
+            ).length;
+
+            const completedThisWeek = tasks.filter((t: any) => {
+              if (t.status !== 'completed' || !t.completed_at) return false;
+              const completedDate = new Date(t.completed_at);
+              const weekAgo = new Date();
+              weekAgo.setDate(weekAgo.getDate() - 7);
+              return completedDate >= weekAgo;
+            }).length;
+
+            // Get burnout data
+            let burnoutRisk = 0.2; // default
+            try {
+              const burnoutRes = await axios.get(`${API_URL}/analytics/burnout/${member.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              burnoutRisk = burnoutRes.data.current_risk_score || 0.2;
+            } catch (err) {
+              console.warn(`No burnout data for ${member.name}`);
+            }
+
+            // Calculate workload score (sum of estimated efforts)
+            const workloadScore = tasks
+              .filter((t: any) => t.status === 'pending' || t.status === 'in_progress')
+              .reduce((sum: number, t: any) => sum + (t.estimated_effort || 0), 0);
+
+            return {
+              id: member.id,
+              name: member.name,
+              role: member.role || 'Team Member',
+              avatar: member.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+              activeTasks,
+              completedThisWeek,
+              workloadScore,
+              burnoutRisk,
+              productivity: Math.max(0, Math.min(100, 100 - (burnoutRisk * 50))),
+            };
+          } catch (err) {
+            console.error(`Error fetching data for ${member.name}:`, err);
+            return null;
+          }
+        })
+      );
+
+      setTeamMembers(membersWithData.filter(m => m !== null) as TeamMember[]);
+    } catch (err: any) {
+      console.error('Failed to fetch team data:', err);
+      setError(err.response?.data?.detail || 'Impossible de charger les données de l\'équipe');
+      // Fallback to mock data
+      setTeamMembers(mockTeamMembers);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const avgWorkload = teamMembers.length > 0
+    ? teamMembers.reduce((sum, m) => sum + m.workloadScore, 0) / teamMembers.length
+    : 0;
+  const avgBurnout = teamMembers.length > 0
+    ? teamMembers.reduce((sum, m) => sum + m.burnoutRisk, 0) / teamMembers.length
+    : 0;
   const totalActive = teamMembers.reduce((sum, m) => sum + m.activeTasks, 0);
   const totalCompleted = teamMembers.reduce((sum, m) => sum + m.completedThisWeek, 0);
 
@@ -108,25 +211,54 @@ export default function TeamView() {
 
   return (
     <Box>
+      {/* Error Display */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={700} gutterBottom>
-            Team Overview 👥
+            Team Overview
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Monitor team workload and wellbeing
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          }}
-        >
-          Rebalance Workload
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+            onClick={fetchTeamData}
+            disabled={loading}
+            sx={{
+              borderColor: '#667eea',
+              color: '#667eea',
+            }}
+          >
+            {loading ? 'Chargement...' : 'Actualiser'}
+          </Button>
+          <Button
+            variant="contained"
+            disabled={loading}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            }}
+          >
+            Rebalance Workload
+          </Button>
+        </Box>
       </Box>
+
+      {loading && teamMembers.length === 0 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
 
       {/* Team Stats */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -387,6 +519,8 @@ export default function TeamView() {
           </TableContainer>
         </CardContent>
       </Card>
+      </>
+      )}
     </Box>
   );
 }

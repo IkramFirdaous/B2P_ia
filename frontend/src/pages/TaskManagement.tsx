@@ -1,7 +1,7 @@
 /**
  * Task Management Page - View and manage tasks
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -22,101 +22,96 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Alert,
+  CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
   FilterList as FilterIcon,
+  Balance as BalanceIcon,
 } from '@mui/icons-material';
+import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import TaskCard from '../components/TaskCard';
 import { Task, TaskStatus } from '../types/Task';
 
-// Mock data
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Implement user authentication system',
-    description: 'Create a secure authentication flow with JWT tokens',
-    assigned_to: 'user-1',
-    created_by: 'manager-1',
-    urgency: 5,
-    deadline: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    estimated_effort: 8,
-    status: TaskStatus.IN_PROGRESS,
-    priority_score: 0.92,
-    dependencies: [],
-    source: 'manual' as any,
-    completed_at: undefined,
-    actual_effort: undefined,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Review code for payment module',
-    description: 'Perform security audit',
-    assigned_to: 'user-1',
-    created_by: 'manager-1',
-    urgency: 4,
-    deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    estimated_effort: 4,
-    status: TaskStatus.PENDING,
-    priority_score: 0.75,
-    dependencies: [],
-    source: 'email' as any,
-    completed_at: undefined,
-    actual_effort: undefined,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Design new landing page',
-    description: 'Create mockups for the new marketing landing page',
-    assigned_to: 'user-1',
-    created_by: 'manager-1',
-    urgency: 3,
-    estimated_effort: 6,
-    status: TaskStatus.PENDING,
-    priority_score: 0.58,
-    dependencies: [],
-    source: 'meeting' as any,
-    completed_at: undefined,
-    actual_effort: undefined,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    title: 'Fix responsive layout issues',
-    description: 'Address mobile layout problems on product pages',
-    assigned_to: 'user-1',
-    created_by: 'manager-1',
-    urgency: 4,
-    deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    estimated_effort: 3,
-    status: TaskStatus.COMPLETED,
-    priority_score: 0.82,
-    dependencies: [],
-    source: 'manual' as any,
-    completed_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    actual_effort: 2.5,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+
+interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
 
 export default function TaskManagement() {
-  const [tasks] = useState<Task[]>(mockTasks);
+  const { user, token } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentTab, setCurrentTab] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [rebalancing, setRebalancing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     urgency: 3,
     estimated_effort: 0,
+    assigned_to: '',
   });
+
+  // Fetch tasks on component mount
+  useEffect(() => {
+    fetchTasks();
+    fetchEmployees();
+  }, []);
+
+  // Auto-refresh every 30 seconds to catch new email tasks
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (token && user && !loading) {
+        fetchTasks();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(intervalId);
+  }, [token, user, loading]);
+
+  const fetchTasks = async () => {
+    if (!token || !user) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_URL}/tasks`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { assigned_to: user.id }
+      });
+      setTasks(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch tasks:', err);
+      setError(err.response?.data?.detail || 'Failed to load tasks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    if (!token) return;
+
+    try {
+      const response = await axios.get(`${API_URL}/employees`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEmployees(response.data);
+    } catch (err: any) {
+      console.error('Failed to fetch employees:', err);
+    }
+  };
 
   const filteredTasks = tasks.filter(task => {
     // Filter by search
@@ -139,39 +134,163 @@ export default function TaskManagement() {
     completed: tasks.filter(t => t.status === TaskStatus.COMPLETED).length,
   };
 
-  const handleCreateTask = () => {
-    // Handle task creation
-    console.log('Creating task:', newTask);
-    setOpenDialog(false);
-    setNewTask({ title: '', description: '', urgency: 3, estimated_effort: 0 });
+  const handleCreateTask = async () => {
+    if (!token || !user) return;
+
+    try {
+      setLoading(true);
+      await axios.post(
+        `${API_URL}/tasks`,
+        {
+          title: newTask.title,
+          description: newTask.description,
+          urgency: newTask.urgency,
+          estimated_effort: newTask.estimated_effort,
+          created_by: user.id,
+          assigned_to: newTask.assigned_to || user.id,  // Use selected employee or default to current user
+          status: 'pending',
+          source: 'manual',
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      setSuccessMessage('Task created successfully!');
+      setOpenDialog(false);
+      setNewTask({ title: '', description: '', urgency: 3, estimated_effort: 0, assigned_to: '' });
+
+      // Refresh tasks to show the new one
+      await fetchTasks();
+    } catch (err: any) {
+      console.error('Failed to create task:', err);
+      setError(err.response?.data?.detail || 'Failed to create task');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRebalanceWorkload = async () => {
+    if (!token || !user?.team_id) {
+      setError('You must be part of a team to rebalance workload');
+      return;
+    }
+
+    try {
+      setRebalancing(true);
+      const response = await axios.post(
+        `${API_URL}/tasks/rebalance-workload`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { team_id: user.team_id }
+        }
+      );
+
+      const { total_reassignments, message } = response.data;
+      setSuccessMessage(message || `Workload rebalanced! ${total_reassignments} tasks reassigned.`);
+
+      // Refresh tasks to show updated assignments
+      await fetchTasks();
+    } catch (err: any) {
+      console.error('Failed to rebalance workload:', err);
+      setError(err.response?.data?.detail || 'Failed to rebalance workload');
+    } finally {
+      setRebalancing(false);
+    }
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    if (!token) return;
+
+    try {
+      await axios.put(
+        `${API_URL}/tasks/${taskId}`,
+        { status: newStatus },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      setSuccessMessage(`Task status updated to ${newStatus.replace('_', ' ')}`);
+
+      // Refresh tasks to show updated status
+      await fetchTasks();
+    } catch (err: any) {
+      console.error('Failed to update task status:', err);
+      setError(err.response?.data?.detail || 'Failed to update task status');
+      throw err;
+    }
   };
 
   return (
     <Box>
+      {/* Error/Success Messages */}
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={4000}
+        onClose={() => setSuccessMessage(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={700} gutterBottom>
-            Task Management 📋
+            Task Management
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Manage and track your tasks efficiently
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenDialog(true)}
-          sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            '&:hover': {
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={rebalancing ? <CircularProgress size={20} /> : <BalanceIcon />}
+            onClick={handleRebalanceWorkload}
+            disabled={rebalancing || loading}
+            sx={{
+              borderColor: '#667eea',
+              color: '#667eea',
+              '&:hover': {
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(102, 126, 234, 0.04)',
+              },
+            }}
+          >
+            {rebalancing ? 'Rebalancing...' : 'Rebalance Workload'}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpenDialog(true)}
+            disabled={loading}
+            sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              opacity: 0.9,
-            },
-          }}
-        >
-          New Task
-        </Button>
+              '&:hover': {
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                opacity: 0.9,
+              },
+            }}
+          >
+            New Task
+          </Button>
+        </Box>
       </Box>
 
       {/* Search and Filters */}
@@ -251,28 +370,34 @@ export default function TaskManagement() {
       </Card>
 
       {/* Task List */}
-      <Grid container spacing={3}>
-        {filteredTasks.length === 0 ? (
-          <Grid item xs={12}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center', py: 8 }}>
-                <Typography variant="h6" color="text.secondary">
-                  No tasks found
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {searchQuery ? 'Try a different search query' : 'Create your first task to get started'}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ) : (
-          filteredTasks.map(task => (
-            <Grid item xs={12} md={6} lg={4} key={task.id}>
-              <TaskCard task={task} />
+      {loading && tasks.length === 0 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={3}>
+          {filteredTasks.length === 0 ? (
+            <Grid item xs={12}>
+              <Card>
+                <CardContent sx={{ textAlign: 'center', py: 8 }}>
+                  <Typography variant="h6" color="text.secondary">
+                    No tasks found
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    {searchQuery ? 'Try a different search query' : 'Create your first task to get started'}
+                  </Typography>
+                </CardContent>
+              </Card>
             </Grid>
-          ))
-        )}
-      </Grid>
+          ) : (
+            filteredTasks.map(task => (
+              <Grid item xs={12} md={6} lg={4} key={task.id}>
+                <TaskCard task={task} onStatusChange={handleStatusChange} />
+              </Grid>
+            ))
+          )}
+        </Grid>
+      )}
 
       {/* Create Task Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
@@ -318,19 +443,41 @@ export default function TaskManagement() {
               value={newTask.estimated_effort}
               onChange={(e) => setNewTask({ ...newTask, estimated_effort: parseFloat(e.target.value) })}
             />
+            <FormControl fullWidth>
+              <InputLabel>Assign To</InputLabel>
+              <Select
+                value={newTask.assigned_to}
+                label="Assign To"
+                onChange={(e) => setNewTask({ ...newTask, assigned_to: e.target.value })}
+              >
+                <MenuItem value={user?.id || ''}>
+                  <em>Myself ({user?.name})</em>
+                </MenuItem>
+                {employees
+                  .filter(emp => emp.id !== user?.id)
+                  .map((employee) => (
+                    <MenuItem key={employee.id} value={employee.id}>
+                      {employee.name} - {employee.role}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenDialog(false)} disabled={loading}>
+            Cancel
+          </Button>
           <Button
             variant="contained"
             onClick={handleCreateTask}
-            disabled={!newTask.title}
+            disabled={!newTask.title || loading}
+            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : undefined}
             sx={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             }}
           >
-            Create Task
+            {loading ? 'Creating...' : 'Create Task'}
           </Button>
         </DialogActions>
       </Dialog>

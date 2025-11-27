@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(npm start)",
+      "Bash(python:*)",
+      "Bash(uvicorn:*)",
+      "Bash(xargs:*)",
+      "Bash(cat:*)",
+      "Bash(nul)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

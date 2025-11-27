@@ -1,0 +1,17 @@
+Subject: Urgent: Fix production bug
+Urgency: 5/5
+Source: email
+
+==================================================
+
+Bonjour,
+
+Nous avons détecté un bug critique en production qui affecte les utilisateurs.
+Il faut absolument corriger ce problème avant demain 14h.
+
+Le bug se situe dans le module de paiement - les transactions échouent de manière aléatoire.
+
+Merci de traiter cela en priorité.
+
+Cordialement,
+Manager
